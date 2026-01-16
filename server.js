@@ -16,9 +16,16 @@
  */
 
 const http = require('http');
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+
+const PASSWORD_MIN_LENGTH = 8;
+const EMPLOYEE_NUMBER_RE = /^[0-9A-Za-z-]{3,20}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PBKDF2_ITERATIONS = 100000;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const RATE_LIMITS = new Map();
 
 // Path to JSON database file
 const DB_FILE = path.join(__dirname, 'db.json');
@@ -73,19 +80,53 @@ loadAuthorizedUsers();
 // Helper functions for password hashing and verification
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-  return { salt, hash };
+  const hash = crypto.pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, 64, 'sha512').toString('hex');
+  return { salt, hash, iterations: PBKDF2_ITERATIONS };
 }
 
 function verifyPassword(password, user) {
-  const hash = crypto.pbkdf2Sync(password, user.salt, 1000, 64, 'sha512').toString('hex');
-  return hash === user.password;
+  if (!user.salt) {
+    return { ok: password === user.password, needsUpgrade: true };
+  }
+  const iterations = user.iterations || PBKDF2_ITERATIONS;
+  const hash = crypto.pbkdf2Sync(password, user.salt, iterations, 64, 'sha512').toString('hex');
+  return { ok: hash === user.password, needsUpgrade: false };
+}
+
+function applySecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+}
+
+function getClientKey(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded || req.socket.remoteAddress || 'unknown';
+  return ip;
+}
+
+function isRateLimited(req, key, maxRequests) {
+  const clientKey = getClientKey(req);
+  const now = Date.now();
+  const bucketKey = `${clientKey}:${key}`;
+  const bucket = RATE_LIMITS.get(bucketKey) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+  if (now > bucket.resetAt) {
+    bucket.count = 0;
+    bucket.resetAt = now + RATE_LIMIT_WINDOW_MS;
+  }
+  bucket.count += 1;
+  RATE_LIMITS.set(bucketKey, bucket);
+  return bucket.count > maxRequests;
 }
 
 // Helper to send JSON responses
 function sendJSON(res, status, payload) {
+  applySecurityHeaders(res);
   res.writeHead(status, {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
@@ -104,9 +145,11 @@ function newSession(user) {
   // Generate a random token and store session data. The token is returned to the
   // client via a cookie. The session stores the lowercase email and admin flag.
   const token = crypto.randomBytes(32).toString('hex');
+  const adminAgency = user.isAdmin ? (user.adminAgency || user.agency || 'all') : null;
   sessions.set(token, {
     email: user.email.toLowerCase(),
     isAdmin: !!user.isAdmin,
+    adminAgency,
     expiresAt: Date.now() + (12 * 60 * 60 * 1000) // 12 hours
   });
   return token;
@@ -179,6 +222,39 @@ function parseJSONBody(req, callback) {
   });
 }
 
+function isValidEmail(email) {
+  return EMAIL_RE.test(email);
+}
+
+function isValidEmployeeNumber(employeeNumber) {
+  return EMPLOYEE_NUMBER_RE.test(String(employeeNumber || ''));
+}
+
+function sanitizeUser(user) {
+  const { password, salt, passwordReset, ...safeUser } = user;
+  return safeUser;
+}
+
+function filterUsersForAgency(users, agency) {
+  if (!agency || agency === 'all') return users;
+  return users.filter(user => (user.agency || '').toLowerCase() === String(agency).toLowerCase());
+}
+
+function toCsv(rows, headers) {
+  const escape = value => {
+    const str = value == null ? '' : String(value);
+    if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+  const lines = [headers.join(',')];
+  rows.forEach(row => {
+    lines.push(headers.map(header => escape(row[header])).join(','));
+  });
+  return lines.join('\n');
+}
+
 // Compute achievements and level ups based on points
 function computeAchievements(user) {
   // Simple achievement rules: award titles based on points
@@ -202,6 +278,7 @@ const server = http.createServer((req, res) => {
 
   // Handle CORS preflight
   if (method === 'OPTIONS') {
+    applySecurityHeaders(res);
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
@@ -212,11 +289,23 @@ const server = http.createServer((req, res) => {
 
   // Endpoint: POST /api/signup
   if (method === 'POST' && pathname === '/api/signup') {
+    if (isRateLimited(req, 'signup', 20)) {
+      return sendJSON(res, 429, { error: 'Too many requests. Please try again later.' });
+    }
     return parseJSONBody(req, (err, data) => {
       if (err) return sendJSON(res, 400, { error: 'Invalid JSON' });
       const { firstName, lastName, email, password, employeeNumber, age, gender, height, weight, smoke, conditions } = data;
       if (!email || !password || !firstName || !employeeNumber) {
         return sendJSON(res, 400, { error: 'Missing required fields' });
+      }
+      if (!isValidEmail(email)) {
+        return sendJSON(res, 400, { error: 'Invalid email address' });
+      }
+      if (!isValidEmployeeNumber(employeeNumber)) {
+        return sendJSON(res, 400, { error: 'Invalid employee number' });
+      }
+      if (String(password).length < PASSWORD_MIN_LENGTH) {
+        return sendJSON(res, 400, { error: `Password must be at least ${PASSWORD_MIN_LENGTH} characters` });
       }
       // Authorisation check: email must exist in authorizedUsers and employee number must match
       const authEmp = authorizedUsers[email.toLowerCase()];
@@ -229,7 +318,7 @@ const server = http.createServer((req, res) => {
         return sendJSON(res, 409, { error: 'User already exists' });
       }
       // Hash password
-      const { salt, hash } = hashPassword(password);
+      const { salt, hash, iterations } = hashPassword(password);
       // Create user record
       const newUser = {
         id: Date.now(),
@@ -237,6 +326,7 @@ const server = http.createServer((req, res) => {
         email,
         password: hash,
         salt,
+        iterations,
         employeeNumber: String(employeeNumber),
         age: age || null,
         gender: gender || null,
@@ -244,6 +334,7 @@ const server = http.createServer((req, res) => {
         weight: weight || null,
         smoke: smoke || 'no',
         conditions: conditions || '',
+        agency: data && data.agency ? String(data.agency) : null,
         points: 0,
         weeklyPoints: 0,
         cardioStreak: 0,
@@ -251,6 +342,7 @@ const server = http.createServer((req, res) => {
         tobaccoStreak: 0,
         todayCardio: 0,
         activities: [],
+        redemptions: [],
         achievements: [],
         mood: 'good',
         darkMode: false,
@@ -269,23 +361,41 @@ const server = http.createServer((req, res) => {
 
   // Endpoint: POST /api/login
   if (method === 'POST' && pathname === '/api/login') {
+    if (isRateLimited(req, 'login', 30)) {
+      return sendJSON(res, 429, { error: 'Too many login attempts. Please try again later.' });
+    }
     return parseJSONBody(req, (err, data) => {
       if (err) return sendJSON(res, 400, { error: 'Invalid JSON' });
       const { email, password, employeeNumber } = data;
       if (!email || !password || !employeeNumber) {
         return sendJSON(res, 400, { error: 'Missing credentials' });
       }
+      if (!isValidEmail(email)) {
+        return sendJSON(res, 400, { error: 'Invalid email address' });
+      }
       const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
       // Verify user exists, password matches and employee number matches
-      if (!user || !verifyPassword(password, user) || user.employeeNumber !== String(employeeNumber)) {
+      const verification = user ? verifyPassword(password, user) : { ok: false };
+      if (!user || !verification.ok || user.employeeNumber !== String(employeeNumber)) {
         return sendJSON(res, 401, { error: 'Invalid email or password' });
+      }
+      if (verification.needsUpgrade) {
+        const { salt, hash, iterations } = hashPassword(password);
+        user.salt = salt;
+        user.password = hash;
+        user.iterations = iterations;
+        saveDB();
       }
       // Create a new session and set a secure cookie
       const token = newSession(user);
+      const isSecure = req.connection.encrypted || req.headers['x-forwarded-proto'] === 'https';
       // Set cookie with HttpOnly so it cannot be accessed via client JavaScript. SameSite=Lax to mitigate CSRF.
-      res.setHeader('Set-Cookie', `ahelp_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${12*60*60}`);
+      res.setHeader('Set-Cookie', `ahelp_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${12*60*60}${isSecure ? '; Secure' : ''}`);
       // On success return user info (excluding password and salt)
-      const { password: __, salt: ___, ...safeUser } = user;
+      const safeUser = sanitizeUser(user);
+      if (safeUser.isAdmin) {
+        safeUser.adminAgency = user.adminAgency || user.agency || 'all';
+      }
       return sendJSON(res, 200, { user: safeUser });
     });
   }
@@ -298,7 +408,10 @@ const server = http.createServer((req, res) => {
     const user = db.users.find(u => u.email.toLowerCase() === session.email.toLowerCase());
     if (!user) return sendJSON(res, 401, { error: 'Unauthorized' });
 
-    const { password: __, salt: ___, passwordReset: ____, ...safeUser } = user;
+    const safeUser = sanitizeUser(user);
+    if (safeUser.isAdmin) {
+      safeUser.adminAgency = user.adminAgency || user.agency || 'all';
+    }
     return sendJSON(res, 200, { user: safeUser });
   }
 
@@ -306,31 +419,43 @@ const server = http.createServer((req, res) => {
   if (method === 'GET' && pathname === '/api/user') {
     const email = urlObj.searchParams.get('email');
     if (!email) return sendJSON(res, 400, { error: 'Email query parameter required' });
+    const session = requireAuth(req, res);
+    if (!session) return;
+    if (!session.isAdmin && session.email.toLowerCase() !== email.toLowerCase()) {
+      return sendJSON(res, 403, { error: 'Access denied' });
+    }
     const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) return sendJSON(res, 404, { error: 'User not found' });
-    const { password: _, ...safeUser } = user;
+    const safeUser = sanitizeUser(user);
     return sendJSON(res, 200, { user: safeUser });
   }
 
   // Endpoint: POST /api/activities  – log activity
   if (method === 'POST' && pathname === '/api/activities') {
+    const session = requireAuth(req, res);
+    if (!session) return;
     return parseJSONBody(req, (err, data) => {
       if (err) return sendJSON(res, 400, { error: 'Invalid JSON' });
       const { email, activityType, minutes, description } = data;
-      if (!email || !activityType) {
+      if (!activityType) {
         return sendJSON(res, 400, { error: 'Missing required fields' });
       }
-      const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const requestEmail = (email || session.email).toLowerCase();
+      if (session.email.toLowerCase() !== requestEmail && !session.isAdmin) {
+        return sendJSON(res, 403, { error: 'Access denied' });
+      }
+      const user = db.users.find(u => u.email.toLowerCase() === requestEmail);
       if (!user) {
         return sendJSON(res, 404, { error: 'User not found' });
       }
+      const minutesValue = minutes ? Math.max(0, Math.min(600, Number(minutes))) : null;
       // Determine points based on activity type and minutes
       let earned = 0;
       switch (activityType) {
         case 'cardio':
-          earned = minutes ? Math.floor(minutes / 30) * 10 : 10; // 10 points per 30 min
+          earned = minutesValue ? Math.floor(minutesValue / 30) * 10 : 10; // 10 points per 30 min
           user.cardioStreak += 1;
-          user.todayCardio += minutes || 0;
+          user.todayCardio += minutesValue || 0;
           break;
         case 'nutrition':
           earned = 5;
@@ -358,7 +483,7 @@ const server = http.createServer((req, res) => {
       user.activities.push({
         timestamp: new Date().toISOString(),
         type: activityType,
-        minutes: minutes || null,
+        minutes: minutesValue || null,
         description: description || '',
         points: earned
       });
@@ -366,29 +491,43 @@ const server = http.createServer((req, res) => {
       user.achievements = computeAchievements(user);
       user.level = computeLevel(user.points);
       saveDB();
-      const { password: _, ...safeUser } = user;
+      const safeUser = sanitizeUser(user);
       return sendJSON(res, 200, { user: safeUser, earned });
     });
   }
 
   // Endpoint: POST /api/redeem  – redeem points for leave
   if (method === 'POST' && pathname === '/api/redeem') {
+    const session = requireAuth(req, res);
+    if (!session) return;
     return parseJSONBody(req, (err, data) => {
       if (err) return sendJSON(res, 400, { error: 'Invalid JSON' });
       const { email, hours } = data;
-      if (!email || !hours) return sendJSON(res, 400, { error: 'Missing email or hours' });
-      const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!hours) return sendJSON(res, 400, { error: 'Missing email or hours' });
+      const requestEmail = (email || session.email).toLowerCase();
+      if (session.email.toLowerCase() !== requestEmail && !session.isAdmin) {
+        return sendJSON(res, 403, { error: 'Access denied' });
+      }
+      const user = db.users.find(u => u.email.toLowerCase() === requestEmail);
       if (!user) return sendJSON(res, 404, { error: 'User not found' });
+      const hoursValue = Math.max(0, Math.min(40, Number(hours)));
+      if (!hoursValue) return sendJSON(res, 400, { error: 'Invalid hours' });
       // Points cost per hour: 100 points per hour as example
-      const cost = hours * 100;
+      const cost = hoursValue * 100;
       if (user.points < cost) return sendJSON(res, 400, { error: 'Insufficient points' });
       user.points -= cost;
-      user.leaveTime += hours;
+      user.leaveTime += hoursValue;
+      user.redemptions = user.redemptions || [];
+      user.redemptions.push({
+        timestamp: new Date().toISOString(),
+        hours: hoursValue,
+        cost
+      });
       user.achievements = computeAchievements(user);
       user.level = computeLevel(user.points);
       saveDB();
-      const { password: _, ...safeUser } = user;
-      return sendJSON(res, 200, { user: safeUser, redeemed: hours, cost });
+      const safeUser = sanitizeUser(user);
+      return sendJSON(res, 200, { user: safeUser, redeemed: hoursValue, cost });
     });
   }
 
@@ -400,12 +539,16 @@ const server = http.createServer((req, res) => {
       sessions.delete(token);
     }
     // Clear the cookie
-    res.setHeader('Set-Cookie', 'ahelp_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');
+    const isSecure = req.connection.encrypted || req.headers['x-forwarded-proto'] === 'https';
+    res.setHeader('Set-Cookie', `ahelp_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${isSecure ? '; Secure' : ''}`);
     return sendJSON(res, 200, { ok: true });
   }
 
   // Endpoint: POST /api/password/request – initiate password reset
   if (method === 'POST' && pathname === '/api/password/request') {
+    if (isRateLimited(req, 'password-request', 10)) {
+      return sendJSON(res, 429, { error: 'Too many requests. Please try again later.' });
+    }
     return parseJSONBody(req, (err, data) => {
       // Always respond with ok to avoid disclosing whether a user exists
       if (err) return sendJSON(res, 200, { ok: true });
@@ -429,6 +572,9 @@ const server = http.createServer((req, res) => {
 
   // Endpoint: POST /api/password/reset – reset password using code
   if (method === 'POST' && pathname === '/api/password/reset') {
+    if (isRateLimited(req, 'password-reset', 15)) {
+      return sendJSON(res, 429, { error: 'Too many requests. Please try again later.' });
+    }
     return parseJSONBody(req, (err, data) => {
       if (err) return sendJSON(res, 400, { error: 'Invalid request' });
       const { email, employeeNumber, code, newPassword } = data || {};
@@ -450,13 +596,99 @@ const server = http.createServer((req, res) => {
         return sendJSON(res, 400, { error: 'Invalid or expired reset code' });
       }
       // Reset password
-      const { salt: newSalt, hash: newHash } = hashPassword(newPassword);
+      if (String(newPassword).length < PASSWORD_MIN_LENGTH) {
+        return sendJSON(res, 400, { error: `Password must be at least ${PASSWORD_MIN_LENGTH} characters` });
+      }
+      const { salt: newSalt, hash: newHash, iterations } = hashPassword(newPassword);
       user.salt = newSalt;
       user.password = newHash;
+      user.iterations = iterations;
       delete user.passwordReset;
       saveDB();
       return sendJSON(res, 200, { ok: true });
     });
+  }
+
+  // Admin endpoints: metrics and reports
+  if (method === 'GET' && pathname === '/api/admin/metrics') {
+    const session = requireAdmin(req, res);
+    if (!session) return;
+    const filteredUsers = filterUsersForAgency(db.users, session.adminAgency);
+    const totalUsers = filteredUsers.length;
+    const avgPoints = totalUsers ? Math.round(filteredUsers.reduce((sum, u) => sum + (u.points || 0), 0) / totalUsers) : 0;
+    const avgWeekly = totalUsers ? Math.round(filteredUsers.reduce((sum, u) => sum + (u.weeklyPoints || 0), 0) / totalUsers) : 0;
+    const assessmentsCompleted = filteredUsers.filter(u => u.assessmentDate).length;
+    return sendJSON(res, 200, {
+      totalUsers,
+      avgPoints,
+      avgWeekly,
+      assessmentsCompleted
+    });
+  }
+
+  if (method === 'GET' && pathname === '/api/admin/users') {
+    const session = requireAdmin(req, res);
+    if (!session) return;
+    const filteredUsers = filterUsersForAgency(db.users, session.adminAgency).map(user => sanitizeUser(user));
+    return sendJSON(res, 200, { users: filteredUsers });
+  }
+
+  if (method === 'GET' && pathname === '/api/admin/redemptions') {
+    const session = requireAdmin(req, res);
+    if (!session) return;
+    const filteredUsers = filterUsersForAgency(db.users, session.adminAgency);
+    const redemptions = filteredUsers.flatMap(user => {
+      return (user.redemptions || []).map(redemption => ({
+        user: user.email,
+        name: user.name,
+        agency: user.agency || '',
+        hours: redemption.hours,
+        cost: redemption.cost,
+        timestamp: redemption.timestamp
+      }));
+    });
+    return sendJSON(res, 200, { redemptions });
+  }
+
+  if (method === 'GET' && pathname === '/api/admin/reports/users') {
+    const session = requireAdmin(req, res);
+    if (!session) return;
+    const filteredUsers = filterUsersForAgency(db.users, session.adminAgency).map(user => ({
+      name: user.name,
+      email: user.email,
+      agency: user.agency || '',
+      points: user.points || 0,
+      weeklyPoints: user.weeklyPoints || 0,
+      assessmentDate: user.assessmentDate || ''
+    }));
+    const csv = toCsv(filteredUsers, ['name', 'email', 'agency', 'points', 'weeklyPoints', 'assessmentDate']);
+    applySecurityHeaders(res);
+    res.writeHead(200, {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="ahelp_user_report_${new Date().toISOString().slice(0, 10)}.csv"`
+    });
+    return res.end(csv);
+  }
+
+  if (method === 'GET' && pathname === '/api/admin/reports/redemptions') {
+    const session = requireAdmin(req, res);
+    if (!session) return;
+    const filteredUsers = filterUsersForAgency(db.users, session.adminAgency);
+    const redemptions = filteredUsers.flatMap(user => (user.redemptions || []).map(redemption => ({
+      user: user.email,
+      name: user.name,
+      agency: user.agency || '',
+      hours: redemption.hours,
+      cost: redemption.cost,
+      timestamp: redemption.timestamp
+    })));
+    const csv = toCsv(redemptions, ['user', 'name', 'agency', 'hours', 'cost', 'timestamp']);
+    applySecurityHeaders(res);
+    res.writeHead(200, {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="ahelp_redemptions_${new Date().toISOString().slice(0, 10)}.csv"`
+    });
+    return res.end(csv);
   }
 
   // Serve static frontend files and protect authenticated routes
@@ -502,6 +734,7 @@ const server = http.createServer((req, res) => {
         '.jpeg': 'image/jpeg',
         '.svg': 'image/svg+xml'
       };
+      applySecurityHeaders(res);
       res.writeHead(200, { 'Content-Type': mimeMap[ext] || 'application/octet-stream' });
       fs.createReadStream(filePath).pipe(res);
       return;

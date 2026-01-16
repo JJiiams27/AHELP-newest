@@ -75,6 +75,10 @@
                     <input id="admin-email" type="email" required class="w-full px-4 py-3 border border-gray-300 dark-mode:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" placeholder="admin@example.com">
                 </div>
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Employee Number</label>
+                    <input id="admin-employee" type="text" required class="w-full px-4 py-3 border border-gray-300 dark-mode:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" placeholder="12345">
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Password</label>
                     <input id="admin-password" type="password" required class="w-full px-4 py-3 border border-gray-300 dark-mode:border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" placeholder="••••••••">
                 </div>
@@ -93,33 +97,41 @@
 
     <!-- Scripts -->
     <script>
-        // Handle admin login using stored admin accounts
-        document.getElementById('admin-login-form').addEventListener('submit', e => {
+        async function apiPost(path, body) {
+            const res = await fetch(path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+            return data;
+        }
+
+        document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('admin-email').value.trim();
+            document.getElementById('admin-error').classList.add('hidden');
+            const email = document.getElementById('admin-email').value.trim().toLowerCase();
+            const employeeNumber = document.getElementById('admin-employee').value.trim();
             const password = document.getElementById('admin-password').value;
-            // Load admin accounts from localStorage. If none exist, seed with a default super admin account
-            let adminAccounts;
+
             try {
-                adminAccounts = JSON.parse(localStorage.getItem('adminAccounts')) || [];
-            } catch (err) {
-                adminAccounts = [];
-            }
-            if (adminAccounts.length === 0) {
-                adminAccounts.push({ email: 'admin@ahelp.com', password: 'admin123', agency: 'all' });
-                localStorage.setItem('adminAccounts', JSON.stringify(adminAccounts));
-            }
-            // Find a matching admin account
-            const account = adminAccounts.find(acc => acc.email.toLowerCase() === email.toLowerCase() && acc.password === password);
-            if (account) {
+                const result = await apiPost('/api/login', { email, employeeNumber, password });
+                if (!result.user || !result.user.isAdmin) {
+                    await fetch('/api/logout', { method: 'POST' });
+                    throw new Error('Access denied');
+                }
+                const agency = result.user.adminAgency || result.user.agency || 'all';
                 localStorage.setItem('isAdminLoggedIn', 'true');
-                localStorage.setItem('adminEmail', account.email);
-                const agency = account.agency || 'all';
+                localStorage.setItem('adminEmail', result.user.email);
                 localStorage.setItem('adminAgency', agency);
                 localStorage.setItem('isSuperAdmin', agency === 'all' ? 'true' : 'false');
                 window.location.href = 'admin-dashboard.html';
-            } else {
+            } catch (err) {
                 document.getElementById('admin-error').classList.remove('hidden');
+                console.error(err);
             }
         });
     </script>

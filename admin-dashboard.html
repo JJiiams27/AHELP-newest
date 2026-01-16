@@ -185,6 +185,7 @@
         <!-- Users management section -->
         <section id="users" class="hidden">
             <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">User Management</h2>
+            <p id="server-mode-note" class="mb-4 text-sm text-gray-500 dark-mode:text-gray-400 hidden">You are viewing server-backed data. Editing actions are disabled in this mode.</p>
             <!-- Search bar for filtering users -->
             <div class="mb-4 max-w-md">
                 <input id="user-search" type="text" placeholder="Search by name or email" class="w-full px-4 py-2 border rounded-md dark-mode:bg-gray-600 dark-mode:border-gray-500 dark-mode:text-gray-100" />
@@ -268,16 +269,29 @@
     <!-- Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Redirect if not logged in as admin
-            if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
-                window.location.href = 'admin-login.html';
-                return;
-            }
+            // Redirect if not logged in as admin (server-backed session check)
+            fetch('/api/me')
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => {
+                    if (!data.user || !data.user.isAdmin) {
+                        window.location.href = 'admin-login.html';
+                    } else {
+                        const agency = data.user.adminAgency || data.user.agency || 'all';
+                        localStorage.setItem('adminAgency', agency);
+                        localStorage.setItem('isSuperAdmin', agency === 'all' ? 'true' : 'false');
+                    }
+                })
+                .catch(() => {
+                    window.location.href = 'admin-login.html';
+                });
             // Weekly points limit constant for suspicious activity detection
             const WEEKLY_POINTS_LIMIT = 200;
 
             // Load or initialise admin users data
             let adminUsers;
+            let redemptionLog = [];
+            let serverMode = false;
+            let serverMetrics = null;
             try {
                 adminUsers = JSON.parse(localStorage.getItem('adminUsers')) || [];
             } catch (e) {
@@ -308,6 +322,40 @@
                 adminUsers.push({ name: 'Jamie', email: 'jamie@ahelp.com', password: 'jamiepass', points: 120, weeklyPoints: 40, assessmentDate: null, recommendations: ['150 minutes of exercise','Eat more fruits and vegetables'], agency: 'Commerce' });
                 adminUsers.push({ name: 'Morgan', email: 'morgan@ahelp.com', password: 'morganpass', points: 250, weeklyPoints: 80, assessmentDate: '2025-07-15T00:00:00Z', recommendations: ['Drink 8 glasses of water','Get 7-8 hours sleep','Manage stress'], agency: 'Health' });
                 localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+            }
+
+            async function refreshAdminData() {
+                try {
+                    const [usersRes, redemptionsRes, metricsRes] = await Promise.all([
+                        fetch('/api/admin/users'),
+                        fetch('/api/admin/redemptions'),
+                        fetch('/api/admin/metrics')
+                    ]);
+                    if (!usersRes.ok) throw new Error('Failed to load users');
+                    const usersData = await usersRes.json();
+                    adminUsers = Array.isArray(usersData.users) ? usersData.users : [];
+                    if (redemptionsRes.ok) {
+                        const redemptionsData = await redemptionsRes.json();
+                        redemptionLog = Array.isArray(redemptionsData.redemptions) ? redemptionsData.redemptions : [];
+                    }
+                    if (metricsRes.ok) {
+                        serverMetrics = await metricsRes.json();
+                    }
+                    serverMode = true;
+                } catch (err) {
+                    serverMode = false;
+                    try {
+                        redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                    } catch (e) {
+                        redemptionLog = [];
+                    }
+                    console.warn('Falling back to local demo data.', err);
+                } finally {
+                    const noteEl = document.getElementById('server-mode-note');
+                    if (noteEl) {
+                        noteEl.classList.toggle('hidden', !serverMode);
+                    }
+                }
             }
 
             // Determine the agency for the logged-in admin. If 'all', admin can view all agencies.
@@ -520,15 +568,23 @@
             }
             // Compute analytics
             function updateAnalytics() {
+                if (serverMode && serverMetrics) {
+                    document.getElementById('total-users').textContent = serverMetrics.totalUsers || 0;
+                    document.getElementById('avg-points').textContent = serverMetrics.avgPoints || 0;
+                    document.getElementById('avg-weekly').textContent = serverMetrics.avgWeekly || 0;
+                    document.getElementById('assess-complete').textContent = serverMetrics.assessmentsCompleted || 0;
+                }
                 const filtered = getFilteredUsers();
                 const totalUsers = filtered.length;
                 const totalPoints = filtered.reduce((sum, u) => sum + (u.points || 0), 0);
                 const totalWeekly = filtered.reduce((sum, u) => sum + (u.weeklyPoints || 0), 0);
                 const assessmentsCompleted = filtered.filter(u => u.assessmentDate).length;
-                document.getElementById('total-users').textContent = totalUsers;
-                document.getElementById('avg-points').textContent = totalUsers ? Math.round(totalPoints / totalUsers) : 0;
-                document.getElementById('avg-weekly').textContent = totalUsers ? Math.round(totalWeekly / totalUsers) : 0;
-                document.getElementById('assess-complete').textContent = assessmentsCompleted;
+                if (!serverMode || !serverMetrics) {
+                    document.getElementById('total-users').textContent = totalUsers;
+                    document.getElementById('avg-points').textContent = totalUsers ? Math.round(totalPoints / totalUsers) : 0;
+                    document.getElementById('avg-weekly').textContent = totalUsers ? Math.round(totalWeekly / totalUsers) : 0;
+                    document.getElementById('assess-complete').textContent = assessmentsCompleted;
+                }
                 // Update points distribution chart
                 const ctx = document.getElementById('pointsChart').getContext('2d');
                 if (window.pointsChart) window.pointsChart.destroy();
@@ -580,13 +636,7 @@
 
             // Function to update redemptions summary and table
             function updateRedemptions() {
-                let redemptionLog;
-                try {
-                    redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
-                } catch (e) {
-                    redemptionLog = [];
-                }
-                if (redemptionLog.length === 0) {
+                if (!serverMode && redemptionLog.length === 0) {
                     redemptionLog.push({ user: 'guest@ahelp.com', reward: 'Yoga Mat', cost: 250, date: new Date().toISOString() });
                     redemptionLog.push({ user: 'jamie@ahelp.com', reward: 'Fitness Tracker', cost: 500, date: new Date().toISOString() });
                     localStorage.setItem('redemptionLog', JSON.stringify(redemptionLog));
@@ -610,13 +660,15 @@
                 if (!tbody) return;
                 tbody.innerHTML = '';
                 filteredLogs.forEach(r => {
+                    const rewardLabel = r.reward || (r.hours ? `${r.hours} hours` : 'Reward');
+                    const dateValue = r.date || r.timestamp;
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
                     tr.innerHTML = `
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${r.user}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${r.reward}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${rewardLabel}</td>
                         <td class="px-4 py-3 text-center text-gray-900 dark-mode:text-gray-100">${r.cost}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${new Date(r.date).toLocaleDateString()}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${dateValue ? new Date(dateValue).toLocaleDateString() : '—'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -685,25 +737,27 @@
                     tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
                     // Mask password display
                     const maskedPassword = user.password ? '******' : '';
+                    const disabledAttr = serverMode ? 'disabled' : '';
+                    const disabledClass = serverMode ? 'opacity-50 cursor-not-allowed' : '';
                     tr.innerHTML = `
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.name}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.email}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.agency || '—'}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${maskedPassword}</td>
                         <td class="px-4 py-3 text-center">
-                            <input type="number" min="0" value="${user.points}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500" data-index="${originalIndex}" data-field="points">
+                            <input type="number" min="0" value="${user.points}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500 ${disabledClass}" data-index="${originalIndex}" data-field="points" ${disabledAttr}>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <input type="number" min="0" value="${user.weeklyPoints}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500" data-index="${originalIndex}" data-field="weeklyPoints">
+                            <input type="number" min="0" value="${user.weeklyPoints}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500 ${disabledClass}" data-index="${originalIndex}" data-field="weeklyPoints" ${disabledAttr}>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.assessmentDate ? new Date(user.assessmentDate).toLocaleDateString() : '—'}</td>
                         <td class="px-4 py-3 text-center space-x-1 flex flex-wrap justify-center">
-                            <button class="mb-1 px-2 py-1 bg-blue-500 text-white rounded-md text-xs" data-action="save" data-index="${originalIndex}">Save</button>
-                            <button class="mb-1 px-2 py-1 bg-green-500 text-white rounded-md text-xs" data-action="reset-weekly" data-index="${originalIndex}">Reset Weekly</button>
-                            <button class="mb-1 px-2 py-1 bg-yellow-500 text-white rounded-md text-xs" data-action="reset-points" data-index="${originalIndex}">Reset Points</button>
-                            <button class="mb-1 px-2 py-1 bg-indigo-500 text-white rounded-md text-xs" data-action="reset-password" data-index="${originalIndex}">Reset Password</button>
+                            <button class="mb-1 px-2 py-1 bg-blue-500 text-white rounded-md text-xs ${disabledClass}" data-action="save" data-index="${originalIndex}" ${disabledAttr}>Save</button>
+                            <button class="mb-1 px-2 py-1 bg-green-500 text-white rounded-md text-xs ${disabledClass}" data-action="reset-weekly" data-index="${originalIndex}" ${disabledAttr}>Reset Weekly</button>
+                            <button class="mb-1 px-2 py-1 bg-yellow-500 text-white rounded-md text-xs ${disabledClass}" data-action="reset-points" data-index="${originalIndex}" ${disabledAttr}>Reset Points</button>
+                            <button class="mb-1 px-2 py-1 bg-indigo-500 text-white rounded-md text-xs ${disabledClass}" data-action="reset-password" data-index="${originalIndex}" ${disabledAttr}>Reset Password</button>
                             <button class="mb-1 px-2 py-1 bg-teal-500 text-white rounded-md text-xs" data-action="view-redeems" data-index="${originalIndex}">View Redeems</button>
-                            <button class="mb-1 px-2 py-1 bg-red-500 text-white rounded-md text-xs" data-action="delete" data-index="${originalIndex}">Delete</button>
+                            <button class="mb-1 px-2 py-1 bg-red-500 text-white rounded-md text-xs ${disabledClass}" data-action="delete" data-index="${originalIndex}" ${disabledAttr}>Delete</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -713,6 +767,10 @@
             document.getElementById('users-table').addEventListener('click', (e) => {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                if (serverMode && btn.hasAttribute('disabled')) {
+                    alert('Edits are disabled when connected to the secure server.');
+                    return;
+                }
                 const action = btn.getAttribute('data-action');
                 const index = parseInt(btn.getAttribute('data-index'));
                 if (action === 'save') {
@@ -755,18 +813,25 @@
                     }
                 } else if (action === 'view-redeems') {
                     // Show redemption history for user
-                    let redemptionLog;
-                    try {
-                        redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
-                    } catch (ex) {
-                        redemptionLog = [];
+                    let localRedeems = redemptionLog;
+                    if (!serverMode) {
+                        try {
+                            localRedeems = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                        } catch (ex) {
+                            localRedeems = [];
+                        }
                     }
                     const userEmail = adminUsers[index].email;
-                    const userRedeems = redemptionLog.filter(r => r.user === userEmail);
+                    const userRedeems = localRedeems.filter(r => r.user === userEmail);
                     if (userRedeems.length === 0) {
                         alert('No redemption history for this user.');
                     } else {
-                        const lines = userRedeems.map(rec => `${rec.reward} - ${rec.cost} pts on ${new Date(rec.date).toLocaleDateString()}`);
+                        const lines = userRedeems.map(rec => {
+                            const rewardLabel = rec.reward || (rec.hours ? `${rec.hours} hours` : 'Reward');
+                            const dateValue = rec.date || rec.timestamp;
+                            const dateLabel = dateValue ? new Date(dateValue).toLocaleDateString() : 'Unknown date';
+                            return `${rewardLabel} - ${rec.cost} pts on ${dateLabel}`;
+                        });
                         alert(lines.join('\n'));
                     }
                 } else if (action === 'delete') {
@@ -788,54 +853,76 @@
                 const value = parseInt(input.value) || 0;
                 adminUsers[index][field] = value;
             });
-            // Run report to download CSV
-            document.getElementById('run-report').addEventListener('click', () => {
-                let csv = 'Name,Email,Agency,Points,Weekly Points,Last Assessment\n';
-                // Only include users for this admin's agency (or all if super admin)
-                getFilteredUsers().forEach(u => {
-                    csv += `${u.name},${u.email},${u.agency || ''},${u.points},${u.weeklyPoints},${u.assessmentDate || ''}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            async function downloadReport(path, fallbackBuilder, filenamePrefix) {
+                try {
+                    const response = await fetch(path);
+                    if (!response.ok) throw new Error('Request failed');
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${filenamePrefix}_${new Date().toISOString().slice(0,10)}.csv`);
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    return;
+                } catch (err) {
+                    if (!fallbackBuilder) {
+                        alert('Unable to download report. Please try again.');
+                        console.error(err);
+                        return;
+                    }
+                }
+
+                const fallbackCsv = fallbackBuilder();
+                const blob = new Blob([fallbackCsv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
-                link.setAttribute('download', `ahelp_user_report_${new Date().toISOString().slice(0,10)}.csv`);
+                link.setAttribute('download', `${filenamePrefix}_${new Date().toISOString().slice(0,10)}.csv`);
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            // Run report to download CSV
+            document.getElementById('run-report').addEventListener('click', () => {
+                downloadReport('/api/admin/reports/users', () => {
+                    let csv = 'Name,Email,Agency,Points,Weekly Points,Last Assessment\n';
+                    getFilteredUsers().forEach(u => {
+                        csv += `${u.name},${u.email},${u.agency || ''},${u.points},${u.weeklyPoints},${u.assessmentDate || ''}\n`;
+                    });
+                    return csv;
+                }, 'ahelp_user_report');
             });
 
             // Download redemption report as CSV
             document.getElementById('download-redemptions').addEventListener('click', () => {
-                let redemptionLog;
-                try {
-                    redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
-                } catch (e) {
-                    redemptionLog = [];
-                }
-                // Filter redemption log to respect the current admin agency selection
-                let logsForExport;
-                const currentAgency = localStorage.getItem('adminAgency') || 'all';
-                if (currentAgency === 'all') {
-                    logsForExport = redemptionLog;
-                } else {
-                    const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
-                    logsForExport = redemptionLog.filter(r => allowedEmails.has(r.user));
-                }
-                let csv = 'User,Reward,Points Used,Date\n';
-                logsForExport.forEach(rec => {
-                    csv += `${rec.user},${rec.reward},${rec.cost},${rec.date}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', `ahelp_redemptions_${new Date().toISOString().slice(0,10)}.csv`);
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                downloadReport('/api/admin/reports/redemptions', () => {
+                    let redemptionLog;
+                    try {
+                        redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                    } catch (e) {
+                        redemptionLog = [];
+                    }
+                    let logsForExport;
+                    const currentAgency = localStorage.getItem('adminAgency') || 'all';
+                    if (currentAgency === 'all') {
+                        logsForExport = redemptionLog;
+                    } else {
+                        const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
+                        logsForExport = redemptionLog.filter(r => allowedEmails.has(r.user));
+                    }
+                    let csv = 'User,Reward,Points Used,Date\n';
+                    logsForExport.forEach(rec => {
+                        csv += `${rec.user},${rec.reward},${rec.cost},${rec.date}\n`;
+                    });
+                    return csv;
+                }, 'ahelp_redemptions');
             });
 
             // Download HRA summary as CSV
@@ -864,8 +951,16 @@
                 document.body.removeChild(link);
             });
             // Logout functionality
-            document.getElementById('admin-logout').addEventListener('click', () => {
+            document.getElementById('admin-logout').addEventListener('click', async () => {
+                try {
+                    await fetch('/api/logout', { method: 'POST' });
+                } catch (err) {
+                    console.error(err);
+                }
                 localStorage.removeItem('isAdminLoggedIn');
+                localStorage.removeItem('adminAgency');
+                localStorage.removeItem('isSuperAdmin');
+                localStorage.removeItem('adminEmail');
                 window.location.href = 'index.html';
             });
             // Function to show a specific tab and hide others
@@ -898,11 +993,13 @@
                 });
             });
             // Initial render and default tab
-            renderTable();
-            updateAnalytics();
-            updateAlerts();
-            updateRedemptions();
-            updateHraSummary();
+            refreshAdminData().finally(() => {
+                renderTable();
+                updateAnalytics();
+                updateAlerts();
+                updateRedemptions();
+                updateHraSummary();
+            });
             // Render admin accounts list if the function exists (for super admins)
             if (typeof renderAdminAccounts === 'function') {
                 renderAdminAccounts();
