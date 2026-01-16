@@ -268,11 +268,21 @@
     <!-- Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Redirect if not logged in as admin
-            if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
-                window.location.href = 'admin-login.html';
-                return;
-            }
+            // Redirect if not logged in as admin (server-backed session check)
+            fetch('/api/me')
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => {
+                    if (!data.user || !data.user.isAdmin) {
+                        window.location.href = 'admin-login.html';
+                    } else {
+                        const agency = data.user.adminAgency || data.user.agency || 'all';
+                        localStorage.setItem('adminAgency', agency);
+                        localStorage.setItem('isSuperAdmin', agency === 'all' ? 'true' : 'false');
+                    }
+                })
+                .catch(() => {
+                    window.location.href = 'admin-login.html';
+                });
             // Weekly points limit constant for suspicious activity detection
             const WEEKLY_POINTS_LIMIT = 200;
 
@@ -788,54 +798,76 @@
                 const value = parseInt(input.value) || 0;
                 adminUsers[index][field] = value;
             });
-            // Run report to download CSV
-            document.getElementById('run-report').addEventListener('click', () => {
-                let csv = 'Name,Email,Agency,Points,Weekly Points,Last Assessment\n';
-                // Only include users for this admin's agency (or all if super admin)
-                getFilteredUsers().forEach(u => {
-                    csv += `${u.name},${u.email},${u.agency || ''},${u.points},${u.weeklyPoints},${u.assessmentDate || ''}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            async function downloadReport(path, fallbackBuilder, filenamePrefix) {
+                try {
+                    const response = await fetch(path);
+                    if (!response.ok) throw new Error('Request failed');
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${filenamePrefix}_${new Date().toISOString().slice(0,10)}.csv`);
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    return;
+                } catch (err) {
+                    if (!fallbackBuilder) {
+                        alert('Unable to download report. Please try again.');
+                        console.error(err);
+                        return;
+                    }
+                }
+
+                const fallbackCsv = fallbackBuilder();
+                const blob = new Blob([fallbackCsv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.setAttribute('href', url);
-                link.setAttribute('download', `ahelp_user_report_${new Date().toISOString().slice(0,10)}.csv`);
+                link.setAttribute('download', `${filenamePrefix}_${new Date().toISOString().slice(0,10)}.csv`);
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            // Run report to download CSV
+            document.getElementById('run-report').addEventListener('click', () => {
+                downloadReport('/api/admin/reports/users', () => {
+                    let csv = 'Name,Email,Agency,Points,Weekly Points,Last Assessment\n';
+                    getFilteredUsers().forEach(u => {
+                        csv += `${u.name},${u.email},${u.agency || ''},${u.points},${u.weeklyPoints},${u.assessmentDate || ''}\n`;
+                    });
+                    return csv;
+                }, 'ahelp_user_report');
             });
 
             // Download redemption report as CSV
             document.getElementById('download-redemptions').addEventListener('click', () => {
-                let redemptionLog;
-                try {
-                    redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
-                } catch (e) {
-                    redemptionLog = [];
-                }
-                // Filter redemption log to respect the current admin agency selection
-                let logsForExport;
-                const currentAgency = localStorage.getItem('adminAgency') || 'all';
-                if (currentAgency === 'all') {
-                    logsForExport = redemptionLog;
-                } else {
-                    const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
-                    logsForExport = redemptionLog.filter(r => allowedEmails.has(r.user));
-                }
-                let csv = 'User,Reward,Points Used,Date\n';
-                logsForExport.forEach(rec => {
-                    csv += `${rec.user},${rec.reward},${rec.cost},${rec.date}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', `ahelp_redemptions_${new Date().toISOString().slice(0,10)}.csv`);
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                downloadReport('/api/admin/reports/redemptions', () => {
+                    let redemptionLog;
+                    try {
+                        redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                    } catch (e) {
+                        redemptionLog = [];
+                    }
+                    let logsForExport;
+                    const currentAgency = localStorage.getItem('adminAgency') || 'all';
+                    if (currentAgency === 'all') {
+                        logsForExport = redemptionLog;
+                    } else {
+                        const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
+                        logsForExport = redemptionLog.filter(r => allowedEmails.has(r.user));
+                    }
+                    let csv = 'User,Reward,Points Used,Date\n';
+                    logsForExport.forEach(rec => {
+                        csv += `${rec.user},${rec.reward},${rec.cost},${rec.date}\n`;
+                    });
+                    return csv;
+                }, 'ahelp_redemptions');
             });
 
             // Download HRA summary as CSV
@@ -864,8 +896,16 @@
                 document.body.removeChild(link);
             });
             // Logout functionality
-            document.getElementById('admin-logout').addEventListener('click', () => {
+            document.getElementById('admin-logout').addEventListener('click', async () => {
+                try {
+                    await fetch('/api/logout', { method: 'POST' });
+                } catch (err) {
+                    console.error(err);
+                }
                 localStorage.removeItem('isAdminLoggedIn');
+                localStorage.removeItem('adminAgency');
+                localStorage.removeItem('isSuperAdmin');
+                localStorage.removeItem('adminEmail');
                 window.location.href = 'index.html';
             });
             // Function to show a specific tab and hide others
