@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Challenges</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+
+        /* Dark mode palette for challenges page */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        /* When elements like body carry both a background class and dark‑mode, override them directly */
+        .dark-mode.bg-white,
+        .dark-mode.bg-gray-50,
+        .dark-mode.bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        /* Override gradient backgrounds on the same element */
+        .dark-mode.bg-gradient-to-r,
+        .dark-mode.bg-gradient-to-br,
+        .dark-mode.bg-gradient-to-b,
+        .dark-mode.bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        /* Override children backgrounds when dark‑mode is applied to an ancestor */
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-b,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+
+    <!-- Apply dark mode class early before page renders to prevent flash of unstyled content -->
+    <script>
+      try {
+        if (localStorage.getItem('darkMode') === 'true') {
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
+        }
+      } catch (e) {}
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Home</a>
+                <a href="health-assessment.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Assessment</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Dashboard</a>
+                <a href="progress.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Progress</a>
+                <a href="challenges.html" class="text-purple-600 font-semibold">Challenges</a>
+                <a href="community.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Community</a>
+                <a href="resources.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Resources</a>
+                <a href="profile.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Profile</a>
+                <a href="settings.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Settings</a>
+                <a href="redeem.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Redeem</a>
+            </div>
+            <button id="mobile-btn" class="md:hidden text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <a href="index.html" class="block py-2 text-gray-700 hover:text-purple-600">Home</a>
+            <a href="health-assessment.html" class="block py-2 text-gray-700 hover:text-purple-600">Assessment</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-purple-600">Dashboard</a>
+            <a href="progress.html" class="block py-2 text-gray-700 hover:text-purple-600">Progress</a>
+            <a href="challenges.html" class="block py-2 text-purple-600 font-semibold">Challenges</a>
+            <a href="community.html" class="block py-2 text-gray-700 hover:text-purple-600">Community</a>
+            <a href="resources.html" class="block py-2 text-gray-700 hover:text-purple-600">Resources</a>
+            <a href="profile.html" class="block py-2 text-gray-700 hover:text-purple-600">Profile</a>
+            <a href="settings.html" class="block py-2 text-gray-700 hover:text-purple-600">Settings</a>
+            <a href="redeem.html" class="block py-2 text-gray-700 hover:text-purple-600">Redeem</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="py-16 bg-gradient-to-r from-purple-100 to-orange-50 text-center">
+        <h1 class="text-4xl font-extrabold mb-4 text-gray-900">Gamified Challenges</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Stay motivated with fun wellness challenges designed to push your limits and build healthy habits.</p>
+    </header>
+
+    <!-- Challenges section -->
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Card 1 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Step-Up Challenge</h2>
+                <p class="text-gray-600 mb-4">Hit 50,000 steps this week to earn bonus points.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-purple-500 h-full rounded-full" style="width: 60%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">60% complete</p>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Hydration Hero</h2>
+                <p class="text-gray-600 mb-4">Drink eight glasses of water daily for 7 days.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-orange-400 h-full rounded-full" style="width: 40%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">40% complete</p>
+            </div>
+            <!-- Card 3 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Mindful Minutes</h2>
+                <p class="text-gray-600 mb-4">Meditate for 15 minutes each day.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-green-400 h-full rounded-full" style="width: 80%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">80% complete</p>
+            </div>
+            <!-- Card 4 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Fruit & Veggie Feast</h2>
+                <p class="text-gray-600 mb-4">Eat five servings of fruits/vegetables daily.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-yellow-400 h-full rounded-full" style="width: 25%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">25% complete</p>
+            </div>
+            <!-- Card 5 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Sleep Soundly</h2>
+                <p class="text-gray-600 mb-4">Get 7–8 hours of sleep for a full week.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-blue-400 h-full rounded-full" style="width: 50%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">50% complete</p>
+            </div>
+            <!-- Card 6 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-2">Sugar-Free Sprint</h2>
+                <p class="text-gray-600 mb-4">Avoid processed sugar for 5 days.</p>
+                <div class="w-full bg-gray-200 h-4 rounded-full mb-3">
+                    <div class="bg-red-400 h-full rounded-full" style="width: 10%;"></div>
+                </div>
+                <p class="text-sm text-gray-500">10% complete</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-3">About AHELP</h3>
+                <p class="text-gray-600">AHELP empowers Arkansas state employees to live healthier lifestyles through personalized plans, community support and gamified challenges.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="text-gray-600 hover:text-purple-600">Home</a></li>
+                    <li><a href="health-assessment.html" class="text-gray-600 hover:text-purple-600">Assessment</a></li>
+                    <li><a href="dashboard.html" class="text-gray-600 hover:text-purple-600">Dashboard</a></li>
+                    <li><a href="progress.html" class="text-gray-600 hover:text-purple-600">Progress</a></li>
+                    <li><a href="challenges.html" class="text-purple-600 font-semibold">Challenges</a></li>
+                    <li><a href="community.html" class="text-gray-600 hover:text-purple-600">Community</a></li>
+                    <li><a href="resources.html" class="text-gray-600 hover:text-purple-600">Resources</a></li>
+                    <li><a href="profile.html" class="text-gray-600 hover:text-purple-600">Profile</a></li>
+                    <li><a href="settings.html" class="text-gray-600 hover:text-purple-600">Settings</a></li>
+                    <li><a href="redeem.html" class="text-gray-600 hover:text-purple-600">Redeem</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Contact Us</h3>
+                <p class="text-gray-600">Email: support@ahelp.ar.gov</p>
+                <p class="text-gray-600">Phone: 555‑0101</p>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-gray-500">© 2025 Arkansas Department of Health. All rights reserved.</div>
+    </footer>
+
+    <!-- Mobile menu script -->
+    <script>
+        document.getElementById('mobile-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+    </script>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Dark Mode Persistence & Back‑to‑Top Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Apply saved dark mode from localStorage if enabled
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 200) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+        });
+        backBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Health Assessment</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Dark mode palette similar to login page and dashboard */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        /* When the same element holds both dark-mode and gradient classes */
+        .dark-mode.bg-gradient-to-br,
+        .dark-mode.bg-gradient-to-r,
+        .dark-mode.bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+    <!-- Early dark-mode application -->
+    <script>
+        // Immediately apply dark mode if user preference is stored
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</head>
+<body class="bg-gray-50 transition-all duration-500">
+    <!-- Navigation -->
+    <nav class="flex items-center justify-between px-6 py-4 bg-white shadow-md dark-mode:bg-gray-800">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="flex items-center space-x-3">
+                <img src="logo.png" alt="AHELP logo" class="h-8 w-auto">
+                <span class="text-2xl font-bold bg-gradient-to-r from-purple-500 to-orange-400 bg-clip-text text-transparent">AHELP</span>
+            </a>
+        </div>
+        <div>
+            <a href="index.html" class="text-gray-600 hover:text-purple-600 text-sm dark-mode:text-gray-300">← Back to Home</a>
+        </div>
+    </nav>
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <h1 class="text-3xl md:text-4xl font-bold mb-6 text-gray-800 dark-mode:text-white text-center">Complete Your Health Risk Assessment</h1>
+        <p class="text-gray-600 dark-mode:text-gray-300 mb-8 text-center">Tell us about your current habits and we'll tailor your wellness journey accordingly. You'll only need about 5 minutes.</p>
+        <form id="health-form" class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl p-6 dark-mode:bg-gray-800">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 dark-mode:text-white">Basic Information</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Name</label>
+                        <input type="text" id="name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" placeholder="Your Name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Age</label>
+                        <input type="number" id="age" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" placeholder="e.g. 30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Gender</label>
+                        <select id="gender" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all">
+                            <option value="" disabled selected>Select</option>
+                            <option value="female">Female</option>
+                            <option value="male">Male</option>
+                            <option value="other">Other</option>
+                            <option value="na">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Height (cm)</label>
+                        <input type="number" id="height" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" placeholder="e.g. 170">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Weight (kg)</label>
+                        <input type="number" id="weight" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" placeholder="e.g. 65">
+                    </div>
+                    <!-- Agency selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Agency</label>
+                        <select id="agency" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="" disabled selected>Select Agency</option>
+                            <option value="Agriculture">Agriculture</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Corrections">Corrections</option>
+                            <option value="Education">Education</option>
+                            <option value="Energy and Environment">Energy and Environment</option>
+                            <option value="DFA">DFA</option>
+                            <option value="Health">Health</option>
+                            <option value="DHS">DHS</option>
+                            <option value="Inspector General">Inspector General</option>
+                            <option value="Labor and Licensing">Labor and Licensing</option>
+                            <option value="Military">Military</option>
+                            <option value="Parks, Heritage, Tourism">Parks, Heritage, Tourism</option>
+                            <option value="Public Safety">Public Safety</option>
+                            <option value="Transformation & Shared Svcs">Transformation & Shared Svcs</option>
+                            <option value="Veterans Affairs">Veterans Affairs</option>
+                            <option value="House of Representatives">House of Representatives</option>
+                            <option value="Senate">Senate</option>
+                            <option value="Legislative Audit">Legislative Audit</option>
+                            <option value="Bureau of Leg Research">Bureau of Leg Research</option>
+                            <option value="Court of Appeals">Court of Appeals</option>
+                            <option value="Admin Office of the Courts">Admin Office of the Courts</option>
+                            <option value="Prosecutor Coordinator">Prosecutor Coordinator</option>
+                            <option value="Supreme Court">Supreme Court</option>
+                            <option value="Governors Office">Governors Office</option>
+                            <option value="Lieutenant Governor">Lieutenant Governor</option>
+                            <option value="Attorney General">Attorney General</option>
+                            <option value="Auditor of State">Auditor of State</option>
+                            <option value="Land Commissioner">Land Commissioner</option>
+                            <option value="Secretary of State">Secretary of State</option>
+                            <option value="State Treasurer">State Treasurer</option>
+                            <option value="Game & Fish">Game & Fish</option>
+                            <option value="Election Comm">Election Comm</option>
+                            <option value="Ethics Comm">Ethics Comm</option>
+                            <option value="JDDC">JDDC</option>
+                            <option value="DDSSA">DDSSA</option>
+                            <option value="Public Defender">Public Defender</option>
+                            <option value="State Claims Commission">State Claims Commission</option>
+                            <option value="AR Public Employees Retirement">AR Public Employees Retirement</option>
+                            <option value="Teacher Retirement">Teacher Retirement</option>
+                            <option value="PSC">PSC</option>
+                            <option value="AETN-PBS">AETN-PBS</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6 dark-mode:bg-gray-800">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 dark-mode:text-white">Health & Lifestyle Habits</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">How many minutes of moderate-intensity exercise do you do per week?</label>
+                        <select id="exercise" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="0">0 minutes</option>
+                            <option value="30">1–59 minutes</option>
+                            <option value="90">60–149 minutes</option>
+                            <option value="180">150–299 minutes</option>
+                            <option value="300">300+ minutes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">How many servings of fruits and vegetables do you eat per day?</label>
+                        <select id="fruitsVeg" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="0">0 servings</option>
+                            <option value="1">1–2 servings</option>
+                            <option value="3">3–4 servings</option>
+                            <option value="5">5 or more servings</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">How many glasses of water do you drink daily?</label>
+                        <select id="water" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="0">0–3 glasses</option>
+                            <option value="4">4–7 glasses</option>
+                            <option value="8">8 or more glasses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">Do you currently use tobacco products?</label>
+                        <select id="tobacco" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">How many alcoholic drinks do you consume per week?</label>
+                        <select id="alcohol" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all">
+                            <option value="0">0 drinks</option>
+                            <option value="3">1–6 drinks</option>
+                            <option value="10">7–14 drinks</option>
+                            <option value="15">15+ drinks</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">On average, how many hours of sleep do you get per night?</label>
+                        <select id="sleep" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="5">Less than 6 hours</option>
+                            <option value="6">6–7 hours</option>
+                            <option value="7">7–8 hours</option>
+                            <option value="9">More than 8 hours</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">Do you regularly experience high levels of stress?</label>
+                        <select id="stress" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">When was your last general medical check-up?</label>
+                        <select id="checkup" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all">
+                            <option value="0">Within the last year</option>
+                            <option value="1">1–2 years ago</option>
+                            <option value="3">3 or more years ago</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-2">Do you have any chronic health conditions?</label>
+                        <select id="chronic" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                        <textarea id="chronicDetails" class="mt-2 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all" placeholder="If yes, please specify (optional)"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="mt-6 px-8 py-3 bg-gradient-to-r from-purple-500 to-orange-400 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-orange-500 transition transform hover:scale-105">
+                    Get My Personalized Plan
+                </button>
+            </div>
+        </form>
+        <div id="results" class="mt-8 hidden bg-white rounded-2xl shadow-xl p-6 dark-mode:bg-gray-800">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark-mode:text-white">Your Personalized Wellness Plan</h2>
+            <ul id="recommendations-list" class="space-y-3 list-disc list-inside text-gray-700 dark-mode:text-gray-300"></ul>
+            <p class="mt-4 text-gray-600 dark-mode:text-gray-400">We'll remind you to complete this assessment every year to update your goals.</p>
+            <button id="continue-btn" class="mt-6 px-6 py-3 bg-gradient-to-r from-pink-500 to-orange-400 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-orange-500 transition transform hover:scale-105">
+                Continue to Dashboard
+            </button>
+        </div>
+    </main>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Back to top button
+            const backToTopBtn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopBtn.classList.remove('hidden');
+                } else {
+                    backToTopBtn.classList.add('hidden');
+                }
+            });
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+        // Handle HRA form submission
+        const form = document.getElementById('health-form');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            if (name) {
+                localStorage.setItem('ahelpUserName', name);
+            }
+            const agency = document.getElementById('agency').value;
+            if (agency) {
+                localStorage.setItem('userAgency', agency);
+            }
+            const exercise = parseInt(document.getElementById('exercise').value);
+            const fruitsVeg = parseInt(document.getElementById('fruitsVeg').value);
+            const water = parseInt(document.getElementById('water').value);
+            const tobacco = document.getElementById('tobacco').value;
+            const alcohol = parseInt(document.getElementById('alcohol').value);
+            const sleep = parseInt(document.getElementById('sleep').value);
+            const stress = document.getElementById('stress').value;
+            const checkup = parseInt(document.getElementById('checkup').value);
+            const chronic = document.getElementById('chronic').value;
+            const chronicDetails = document.getElementById('chronicDetails').value.trim();
+            
+            const recommendations = [];
+            // Physical activity recommendation
+            if (exercise < 150) {
+                recommendations.push('Aim for at least 150 minutes of moderate-intensity exercise each week.');
+            } else if (exercise < 300) {
+                recommendations.push('Great job staying active! Aim for up to 300 minutes of exercise each week for additional benefits.');
+            } else {
+                recommendations.push('Fantastic! Keep maintaining your high activity levels.');
+            }
+            // Nutrition recommendation
+            if (fruitsVeg < 5) {
+                recommendations.push('Increase your intake of fruits and vegetables to at least 5 servings per day.');
+            } else {
+                recommendations.push('Awesome! Keep eating plenty of fruits and veggies each day.');
+            }
+            // Hydration recommendation
+            if (water < 8) {
+                recommendations.push('Drink at least 8 glasses of water daily to stay well hydrated.');
+            } else {
+                recommendations.push('Great hydration habits! Keep drinking plenty of water.');
+            }
+            // Tobacco recommendation
+            if (tobacco === 'yes') {
+                recommendations.push('Consider quitting tobacco use. Our program can help you stay tobacco free.');
+            } else {
+                recommendations.push('Stay tobacco free to maximise your health benefits.');
+            }
+            // Alcohol recommendation
+            if (alcohol > 14) {
+                recommendations.push('Reduce your alcohol intake; limit to a moderate amount (no more than 14 drinks per week).');
+            } else if (alcohol > 0) {
+                recommendations.push('Keep alcohol consumption moderate and mindful.');
+            } else {
+                recommendations.push('Great! Continuing to avoid alcohol supports your wellness journey.');
+            }
+            // Sleep recommendation
+            if (sleep < 7) {
+                recommendations.push('Aim for 7–8 hours of sleep per night to support recovery and well‑being.');
+            } else {
+                recommendations.push('Good sleeping habits! Keep getting enough rest.');
+            }
+            // Stress recommendation
+            if (stress === 'yes') {
+                recommendations.push('Incorporate stress management techniques like meditation or deep breathing into your routine.');
+            } else {
+                recommendations.push('Keep up your healthy stress management practices.');
+            }
+            // Check-up recommendation
+            if (checkup >= 1) {
+                recommendations.push('Schedule a preventive check-up with your healthcare provider.');
+            } else {
+                recommendations.push('Keep up with regular medical check-ups.');
+            }
+            // Chronic conditions recommendation
+            if (chronic === 'yes') {
+                if (chronicDetails) {
+                    recommendations.push('Manage your chronic condition(s): ' + chronicDetails + '. Consult your healthcare provider for personalised advice.');
+                } else {
+                    recommendations.push('Manage any chronic conditions with the guidance of your healthcare provider.');
+                }
+            }
+            // Display recommendations
+            const list = document.getElementById('recommendations-list');
+            list.innerHTML = '';
+            recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                list.appendChild(li);
+            });
+            // Save recommendations for later use
+            try {
+                localStorage.setItem('ahelpRecommendations', JSON.stringify(recommendations));
+                // Record the date the assessment was completed so we can remind the user to re‑take it annually
+                localStorage.setItem('ahelpHraDate', new Date().toISOString());
+            } catch (err) {
+                console.error('Could not store recommendations in localStorage:', err);
+            }
+            // Show results section
+            document.getElementById('results').classList.remove('hidden');
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        });
+        // Continue button
+        document.getElementById('continue-btn').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+    </script>
+</body>
+</html>

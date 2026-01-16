@@ -1,0 +1,93 @@
+{
+  "users": [
+    {
+      "id": 1768231207300,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "password",
+      "age": null,
+      "gender": null,
+      "height": null,
+      "weight": null,
+      "smoke": "no",
+      "conditions": "",
+      "points": 10,
+      "weeklyPoints": 10,
+      "cardioStreak": 1,
+      "nutritionStreak": 0,
+      "tobaccoStreak": 0,
+      "todayCardio": 30,
+      "activities": [
+        {
+          "timestamp": "2026-01-12T15:20:13.169Z",
+          "type": "cardio",
+          "minutes": 30,
+          "description": "",
+          "points": 10
+        }
+      ],
+      "achievements": [],
+      "mood": "good",
+      "darkMode": false,
+      "level": 1,
+      "leaveTime": 0
+    },
+    {
+      "id": 1768233453382,
+      "name": "Joseph Iiams",
+      "email": "joseph.iiams@arkansas.gov",
+      "password": "33129eec550e6bc53239bd1fc3b11a38963184c6547cad63e5ab9ab0d39eb699b567b27a79d97cbed74d6d6b25e61168b6b6b0fd23a7b6a884661fd9914079c6",
+      "salt": "18e22625b462e3557ac51f4e35247c3a",
+      "employeeNumber": "12345",
+      "age": null,
+      "gender": null,
+      "height": null,
+      "weight": null,
+      "smoke": "no",
+      "conditions": "",
+      "points": 0,
+      "weeklyPoints": 0,
+      "cardioStreak": 0,
+      "nutritionStreak": 0,
+      "tobaccoStreak": 0,
+      "todayCardio": 0,
+      "activities": [],
+      "achievements": [],
+      "mood": "good",
+      "darkMode": false,
+      "level": 1,
+      "leaveTime": 0,
+      "passwordReset": {
+        "codeHash": "5292677db15a6801736c5289f7178b18550d72120cbc100f14e631dd9d07b933",
+        "expiresAt": 1768238767913
+      }
+    },
+    {
+      "id": 1768238205491,
+      "name": "test test",
+      "email": "test@test.com",
+      "password": "7605b4a1fdcbf7190c1824386357e86ee0eabd39dbe724f3cd2d26d33b4437cb8e28e255dfcb4c8d7f6d0721122c0f63d502fae107055efad61e96320c5230d5",
+      "salt": "eb2e68e2a203a70a8fd49f8798fe0ddd",
+      "employeeNumber": "45678",
+      "age": "33",
+      "gender": "male",
+      "height": "145",
+      "weight": "65",
+      "smoke": "no",
+      "conditions": "",
+      "points": 0,
+      "weeklyPoints": 0,
+      "cardioStreak": 0,
+      "nutritionStreak": 0,
+      "tobaccoStreak": 0,
+      "todayCardio": 0,
+      "activities": [],
+      "achievements": [],
+      "mood": "good",
+      "darkMode": false,
+      "level": 1,
+      "leaveTime": 0,
+      "isAdmin": true
+    }
+  ]
+}

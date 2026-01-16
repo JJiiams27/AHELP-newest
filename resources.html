@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Resources</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+
+        /* Dark mode palette for resources page */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        /* When the same element has both dark-mode and background classes, override as well */
+        .dark-mode.bg-white,
+        .dark-mode.bg-gray-50,
+        .dark-mode.bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode.bg-gradient-to-br,
+        .dark-mode.bg-gradient-to-r,
+        .dark-mode.bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+    <!-- Apply dark mode class early before page renders to prevent flash -->
+    <script>
+        try {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Home</a>
+                <a href="health-assessment.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Assessment</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Dashboard</a>
+                <a href="progress.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Progress</a>
+                <a href="challenges.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Challenges</a>
+                <a href="community.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Community</a>
+                <a href="resources.html" class="text-purple-600 font-semibold">Resources</a>
+                <a href="profile.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Profile</a>
+                <a href="settings.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Settings</a>
+                <a href="redeem.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Redeem</a>
+            </div>
+            <button id="mobile-btn" class="md:hidden text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <a href="index.html" class="block py-2 text-gray-700 hover:text-purple-600">Home</a>
+            <a href="health-assessment.html" class="block py-2 text-gray-700 hover:text-purple-600">Assessment</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-purple-600">Dashboard</a>
+            <a href="progress.html" class="block py-2 text-gray-700 hover:text-purple-600">Progress</a>
+            <a href="challenges.html" class="block py-2 text-gray-700 hover:text-purple-600">Challenges</a>
+            <a href="community.html" class="block py-2 text-gray-700 hover:text-purple-600">Community</a>
+            <a href="resources.html" class="block py-2 text-purple-600 font-semibold">Resources</a>
+            <a href="profile.html" class="block py-2 text-gray-700 hover:text-purple-600">Profile</a>
+            <a href="settings.html" class="block py-2 text-gray-700 hover:text-purple-600">Settings</a>
+            <a href="redeem.html" class="block py-2 text-gray-700 hover:text-purple-600">Redeem</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="py-16 bg-gradient-to-r from-purple-100 to-orange-50 text-center">
+        <h1 class="text-4xl font-extrabold mb-4 text-gray-900">Wellness Resources</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Explore articles, videos and guides curated to support your health journey.</p>
+    </header>
+
+    <!-- Resources grid -->
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Resource card 1 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <img src="kaylee-garrett-GaprWyIw66o-unsplash.jpg" alt="Yoga group" class="h-40 w-full object-cover">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Beginner Yoga Routine</h3>
+                    <p class="text-gray-600 mb-4">A step-by-step guide to improve flexibility and reduce stress through yoga.</p>
+                    <a href="#" class="text-purple-500 hover:underline">Read more</a>
+                </div>
+            </div>
+            <!-- Resource card 2 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <img src="madison-lavern-4gcqRf3-f2I-unsplash.jpg" alt="Meditation" class="h-40 w-full object-cover">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Meditation for Beginners</h3>
+                    <p class="text-gray-600 mb-4">Learn the basics of mindfulness meditation and how to incorporate it into your day.</p>
+                    <a href="#" class="text-purple-500 hover:underline">Read more</a>
+                </div>
+            </div>
+            <!-- Resource card 3 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-40 w-full flex items-center justify-center bg-purple-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 20l-6-6m0 0l6-6m-6 6h12" />
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Healthy Recipes</h3>
+                    <p class="text-gray-600 mb-4">Discover nutritious recipes that are easy to cook and delicious to eat.</p>
+                    <a href="#" class="text-purple-500 hover:underline">View recipes</a>
+                </div>
+            </div>
+            <!-- Resource card 4 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-40 w-full flex items-center justify-center bg-orange-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 11.79V16l-4-3m0 0l4-3m0 0L7 10V5l4 3m1 0l4-3v5l-4 3m0 0l4 3v5l-4-3" />
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Workout Videos</h3>
+                    <p class="text-gray-600 mb-4">Follow along with guided workouts to keep you moving and motivated.</p>
+                    <a href="#" class="text-purple-500 hover:underline">Watch videos</a>
+                </div>
+            </div>
+            <!-- Resource card 5 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-40 w-full flex items-center justify-center bg-green-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c1.4 0 2.4-.83 2.4-1.8S13.4 4.4 12 4.4 9.6 5.23 9.6 6.2 10.6 8 12 8zM7 13c0-2.5 5-4 5-4s5 1.5 5 4v6H7v-6z" />
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Mental Health Guides</h3>
+                    <p class="text-gray-600 mb-4">Access expert advice and tools to support your emotional wellbeing.</p>
+                    <a href="#" class="text-purple-500 hover:underline">Learn more</a>
+                </div>
+            </div>
+            <!-- Resource card 6 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-40 w-full flex items-center justify-center bg-blue-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 11h8M8 7h8m-7 10h7m2 4H9a2 2 0 01-2-2V7c0-1.1.9-2 2-2h8a2 2 0 012 2v10" />
+                    </svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-2">Sleep Tips</h3>
+                    <p class="text-gray-600 mb-4">Practical advice to help you improve sleep quality and recovery.</p>
+                    <a href="#" class="text-purple-500 hover:underline">Get tips</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-3">About AHELP</h3>
+                <p class="text-gray-600">AHELP empowers Arkansas state employees to live healthier lifestyles through personalized plans, community support and gamified challenges.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="text-gray-600 hover:text-purple-600">Home</a></li>
+                    <li><a href="health-assessment.html" class="text-gray-600 hover:text-purple-600">Assessment</a></li>
+                    <li><a href="dashboard.html" class="text-gray-600 hover:text-purple-600">Dashboard</a></li>
+                    <li><a href="progress.html" class="text-gray-600 hover:text-purple-600">Progress</a></li>
+                    <li><a href="challenges.html" class="text-gray-600 hover:text-purple-600">Challenges</a></li>
+                    <li><a href="community.html" class="text-gray-600 hover:text-purple-600">Community</a></li>
+                    <li><a href="resources.html" class="text-purple-600 font-semibold">Resources</a></li>
+                    <li><a href="profile.html" class="text-gray-600 hover:text-purple-600">Profile</a></li>
+                    <li><a href="settings.html" class="text-gray-600 hover:text-purple-600">Settings</a></li>
+                    <li><a href="redeem.html" class="text-gray-600 hover:text-purple-600">Redeem</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Contact Us</h3>
+                <p class="text-gray-600">Email: support@ahelp.ar.gov</p>
+                <p class="text-gray-600">Phone: 555‑0101</p>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-gray-500">© 2025 Arkansas Department of Health. All rights reserved.</div>
+    </footer>
+
+    <!-- Mobile menu script -->
+    <script>
+        document.getElementById('mobile-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+    </script>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Dark Mode Persistence & Back‑to‑Top Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 200) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+        });
+        backBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    </script>
+</body>
+</html>

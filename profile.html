@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Dark mode styling for profile page */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100,
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-l {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Home</a>
+                <!-- Added Assessment link -->
+                <a href="health-assessment.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Assessment</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Dashboard</a>
+                <a href="progress.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Progress</a>
+                <a href="challenges.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Challenges</a>
+                <a href="community.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Community</a>
+                <a href="resources.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Resources</a>
+                <a href="profile.html" class="text-purple-600 font-semibold">Profile</a>
+                <a href="settings.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Settings</a>
+                <a href="redeem.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Redeem</a>
+            </div>
+            <button id="mobile-btn" class="md:hidden text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <a href="index.html" class="block py-2 text-gray-700 hover:text-purple-600">Home</a>
+            <!-- Added Assessment link -->
+            <a href="health-assessment.html" class="block py-2 text-gray-700 hover:text-purple-600">Assessment</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-purple-600">Dashboard</a>
+            <a href="progress.html" class="block py-2 text-gray-700 hover:text-purple-600">Progress</a>
+            <a href="challenges.html" class="block py-2 text-gray-700 hover:text-purple-600">Challenges</a>
+            <a href="community.html" class="block py-2 text-gray-700 hover:text-purple-600">Community</a>
+            <a href="resources.html" class="block py-2 text-gray-700 hover:text-purple-600">Resources</a>
+            <a href="profile.html" class="block py-2 text-purple-600 font-semibold">Profile</a>
+            <a href="settings.html" class="block py-2 text-gray-700 hover:text-purple-600">Settings</a>
+            <a href="redeem.html" class="block py-2 text-gray-700 hover:text-purple-600">Redeem</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="py-16 bg-gradient-to-r from-purple-100 to-orange-50 text-center">
+        <h1 class="text-4xl font-extrabold mb-4 text-gray-900">Your Profile</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">View and update your personal details to personalise your AHELP experience.</p>
+    </header>
+
+    <main class="py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- User info display -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Profile Information</h2>
+                <!-- Display profile picture if available -->
+                <div class="flex flex-col items-center mb-4">
+                    <img id="profile-picture-display" src="" alt="Profile picture" class="w-24 h-24 rounded-full object-cover mb-2 border" style="display:none;" />
+                    <span id="no-profile-picture" class="text-sm text-gray-500">No photo uploaded</span>
+                </div>
+                <p class="mb-2"><span class="font-medium">Name:</span> <span id="display-name">Guest</span></p>
+                <p class="mb-2"><span class="font-medium">Email:</span> <span id="display-email">you@example.com</span></p>
+                <p class="mb-2"><span class="font-medium">Age:</span> <span id="display-age">--</span></p>
+                <p class="mb-2"><span class="font-medium">Gender:</span> <span id="display-gender">--</span></p>
+                <p><span class="font-medium">Height:</span> <span id="display-height">--</span> cm</p>
+                <p><span class="font-medium">Weight:</span> <span id="display-weight">--</span> kg</p>
+            </div>
+            <!-- Update form -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Update Your Details</h2>
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" id="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Your name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="you@example.com">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Age</label>
+                            <input type="number" id="age" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Age">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select id="gender" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                        <input type="file" id="profile-picture" accept="image/*" class="mt-1 block w-full text-sm file:mr-2 file:px-3 file:py-2 file:bg-purple-500 file:text-white file:rounded-md file:border-none" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Height (cm)</label>
+                            <input type="number" id="height" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Height">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                            <input type="number" id="weight" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Weight">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-purple-500 text-white rounded-md shadow hover:bg-purple-600 transition-colors">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-3">About AHELP</h3>
+                <p class="text-gray-600">AHELP empowers Arkansas state employees to live healthier lifestyles through personalized plans, community support and gamified challenges.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="text-gray-600 hover:text-purple-600">Home</a></li>
+                    <li><a href="health-assessment.html" class="text-gray-600 hover:text-purple-600">Assessment</a></li>
+                    <li><a href="dashboard.html" class="text-gray-600 hover:text-purple-600">Dashboard</a></li>
+                    <li><a href="progress.html" class="text-gray-600 hover:text-purple-600">Progress</a></li>
+                    <li><a href="challenges.html" class="text-gray-600 hover:text-purple-600">Challenges</a></li>
+                    <li><a href="community.html" class="text-gray-600 hover:text-purple-600">Community</a></li>
+                    <li><a href="resources.html" class="text-gray-600 hover:text-purple-600">Resources</a></li>
+                    <li><a href="profile.html" class="text-purple-600 font-semibold">Profile</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Contact Us</h3>
+                <p class="text-gray-600">Email: support@ahelp.ar.gov</p>
+                <p class="text-gray-600">Phone: 555‑0101</p>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-gray-500">© 2025 Arkansas Department of Health. All rights reserved.</div>
+    </footer>
+
+    <!-- Scripts for mobile menu and profile handling -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Populate profile info from localStorage if available
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedName = localStorage.getItem('userName');
+            const storedEmail = localStorage.getItem('userEmail');
+            const storedAge = localStorage.getItem('userAge');
+            const storedGender = localStorage.getItem('userGender');
+            const storedHeight = localStorage.getItem('userHeight');
+            const storedWeight = localStorage.getItem('userWeight');
+            if (storedName) document.getElementById('display-name').textContent = storedName;
+            if (storedEmail) document.getElementById('display-email').textContent = storedEmail;
+            if (storedAge) document.getElementById('display-age').textContent = storedAge;
+            if (storedGender) document.getElementById('display-gender').textContent = storedGender;
+            if (storedHeight) document.getElementById('display-height').textContent = storedHeight;
+            if (storedWeight) document.getElementById('display-weight').textContent = storedWeight;
+            // Load and display the stored profile picture
+            const storedPic = localStorage.getItem('userProfilePic');
+            const pictureDisplay = document.getElementById('profile-picture-display');
+            const noPicLabel = document.getElementById('no-profile-picture');
+            if (storedPic && pictureDisplay) {
+                pictureDisplay.src = storedPic;
+                pictureDisplay.style.display = 'block';
+                if (noPicLabel) noPicLabel.style.display = 'none';
+            }
+        });
+
+        // Save updated profile info to localStorage
+        document.getElementById('profile-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            if (name) {
+                localStorage.setItem('userName', name);
+                document.getElementById('display-name').textContent = name;
+            }
+            if (email) {
+                localStorage.setItem('userEmail', email);
+                document.getElementById('display-email').textContent = email;
+            }
+            if (age) {
+                localStorage.setItem('userAge', age);
+                document.getElementById('display-age').textContent = age;
+            }
+            if (gender) {
+                localStorage.setItem('userGender', gender);
+                document.getElementById('display-gender').textContent = gender;
+            }
+            if (height) {
+                localStorage.setItem('userHeight', height);
+                document.getElementById('display-height').textContent = height;
+            }
+            if (weight) {
+                localStorage.setItem('userWeight', weight);
+                document.getElementById('display-weight').textContent = weight;
+            }
+            // Handle profile picture upload
+            const fileInput = document.getElementById('profile-picture');
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const dataURL = evt.target.result;
+                    try {
+                        localStorage.setItem('userProfilePic', dataURL);
+                        const img = document.getElementById('profile-picture-display');
+                        const noPic = document.getElementById('no-profile-picture');
+                        if (img) {
+                            img.src = dataURL;
+                            img.style.display = 'block';
+                        }
+                        if (noPic) noPic.style.display = 'none';
+                    } catch (err) {
+                        console.error('Error storing profile picture', err);
+                    }
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+            // Clear form fields after saving
+            document.getElementById('profile-form').reset();
+            alert('Profile updated successfully!');
+        });
+    </script>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Dark Mode Persistence & Back‑to‑Top Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 200) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+        });
+        backBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Progress</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for progress charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        /* Enable smooth scroll when jumping between sections */
+        html { scroll-behavior: smooth; }
+
+        /* Dark mode palette for progress page */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+
+    <!-- Apply dark mode class early before page renders to prevent flash -->
+    <script>
+        try {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <!-- Branding -->
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP</span>
+            </div>
+            <!-- Navigation links -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Home</a>
+                <a href="health-assessment.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Assessment</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Dashboard</a>
+                <a href="progress.html" class="text-purple-600 font-semibold">Progress</a>
+                <a href="challenges.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Challenges</a>
+                <a href="community.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Community</a>
+                <a href="resources.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Resources</a>
+                <a href="profile.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Profile</a>
+                <a href="settings.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Settings</a>
+                <a href="redeem.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Redeem</a>
+            </div>
+            <!-- Mobile menu toggle -->
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <!-- Mobile menu items -->
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <a href="index.html" class="block py-2 text-gray-700 hover:text-purple-600">Home</a>
+            <a href="health-assessment.html" class="block py-2 text-gray-700 hover:text-purple-600">Assessment</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-purple-600">Dashboard</a>
+            <a href="progress.html" class="block py-2 text-purple-600 font-semibold">Progress</a>
+            <a href="challenges.html" class="block py-2 text-gray-700 hover:text-purple-600">Challenges</a>
+            <a href="community.html" class="block py-2 text-gray-700 hover:text-purple-600">Community</a>
+            <a href="resources.html" class="block py-2 text-gray-700 hover:text-purple-600">Resources</a>
+            <a href="profile.html" class="block py-2 text-gray-700 hover:text-purple-600">Profile</a>
+            <a href="settings.html" class="block py-2 text-gray-700 hover:text-purple-600">Settings</a>
+            <a href="redeem.html" class="block py-2 text-gray-700 hover:text-purple-600">Redeem</a>
+        </div>
+    </nav>
+
+    <!-- Page header -->
+    <header class="py-16 bg-gradient-to-r from-purple-100 to-orange-50">
+        <div class="max-w-3xl mx-auto text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">Track Your Wellness Journey</h1>
+            <p class="text-lg text-gray-600">Visualize your progress over time and celebrate milestones along the way.</p>
+        </div>
+    </header>
+
+    <!-- Charts section -->
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Weekly Activity Chart -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Weekly Activity Minutes</h2>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+            <!-- Monthly Steps Chart -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Monthly Steps</h2>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Milestones Section -->
+    <section class="pb-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Achievement Milestones</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="p-6 bg-white rounded-lg shadow-md card-hover">
+                    <h3 class="text-lg font-semibold mb-2">10K Steps Badge</h3>
+                    <p class="text-gray-600">Awarded for logging over 10,000 steps in a single day.</p>
+                </div>
+                <div class="p-6 bg-white rounded-lg shadow-md card-hover">
+                    <h3 class="text-lg font-semibold mb-2">Consistent Mover</h3>
+                    <p class="text-gray-600">Achieved for working out 5 days in a row.</p>
+                </div>
+                <div class="p-6 bg-white rounded-lg shadow-md card-hover">
+                    <h3 class="text-lg font-semibold mb-2">Nutrition Champion</h3>
+                    <p class="text-gray-600">Unlocked by completing all nutrition goals for a week.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-3">About AHELP</h3>
+                <p class="text-gray-600">AHELP empowers Arkansas state employees to live healthier lifestyles through personalized plans, community support and gamified challenges.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="text-gray-600 hover:text-purple-600">Home</a></li>
+                    <li><a href="health-assessment.html" class="text-gray-600 hover:text-purple-600">Assessment</a></li>
+                    <li><a href="dashboard.html" class="text-gray-600 hover:text-purple-600">Dashboard</a></li>
+                    <li><a href="progress.html" class="text-purple-600 font-semibold">Progress</a></li>
+                    <li><a href="challenges.html" class="text-gray-600 hover:text-purple-600">Challenges</a></li>
+                    <li><a href="community.html" class="text-gray-600 hover:text-purple-600">Community</a></li>
+                    <li><a href="resources.html" class="text-gray-600 hover:text-purple-600">Resources</a></li>
+                    <li><a href="profile.html" class="text-gray-600 hover:text-purple-600">Profile</a></li>
+                    <li><a href="settings.html" class="text-gray-600 hover:text-purple-600">Settings</a></li>
+                    <li><a href="redeem.html" class="text-gray-600 hover:text-purple-600">Redeem</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Contact Us</h3>
+                <p class="text-gray-600">Email: support@ahelp.ar.gov</p>
+                <p class="text-gray-600">Phone: 555‑0101</p>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-gray-500">© 2025 Arkansas Department of Health. All rights reserved.</div>
+    </footer>
+
+    <!-- Scripts for charts and mobile menu toggle -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+        
+        // Data for the weekly activity chart
+        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+        const weeklyChart = new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Minutes Active',
+                    data: [30, 45, 60, 35, 50, 70, 55],
+                    backgroundColor: 'rgba(168, 85, 247, 0.5)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Minutes'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day of Week'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                }
+            }
+        });
+        
+        // Data for the monthly steps chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Steps',
+                    data: [20000, 24000, 22000, 26000],
+                    backgroundColor: 'rgba(251, 146, 60, 0.5)',
+                    borderColor: 'rgba(251, 146, 60, 1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: 'rgba(251, 146, 60, 1)'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Steps'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Week of Month'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                }
+            }
+        });
+    </script>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Dark Mode Persistence & Back‑to‑Top Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 200) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+        });
+        backBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    </script>
+</body>
+</html>

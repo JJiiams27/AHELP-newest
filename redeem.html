@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Redeem Rewards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+
+        /* Dark mode palette for redeem page */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode.bg-white,
+        .dark-mode.bg-gray-50,
+        .dark-mode.bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode.bg-gradient-to-br,
+        .dark-mode.bg-gradient-to-r,
+        .dark-mode.bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+    <!-- Apply dark mode class early before page renders to prevent flash -->
+    <script>
+        try {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Home</a>
+                <!-- New Assessment link -->
+                <a href="health-assessment.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Assessment</a>
+                <a href="dashboard.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Dashboard</a>
+                <a href="progress.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Progress</a>
+                <a href="challenges.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Challenges</a>
+                <a href="community.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Community</a>
+                <a href="resources.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Resources</a>
+                <a href="profile.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Profile</a>
+                <a href="settings.html" class="text-gray-700 hover:text-purple-600 transition-all duration-300">Settings</a>
+                <a href="redeem.html" class="text-purple-600 font-semibold">Redeem</a>
+            </div>
+            <button id="mobile-btn" class="md:hidden text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden px-4 pb-4">
+            <a href="index.html" class="block py-2 text-gray-700 hover:text-purple-600">Home</a>
+            <!-- New Assessment link -->
+            <a href="health-assessment.html" class="block py-2 text-gray-700 hover:text-purple-600">Assessment</a>
+            <a href="dashboard.html" class="block py-2 text-gray-700 hover:text-purple-600">Dashboard</a>
+            <a href="progress.html" class="block py-2 text-gray-700 hover:text-purple-600">Progress</a>
+            <a href="challenges.html" class="block py-2 text-gray-700 hover:text-purple-600">Challenges</a>
+            <a href="community.html" class="block py-2 text-gray-700 hover:text-purple-600">Community</a>
+            <a href="resources.html" class="block py-2 text-gray-700 hover:text-purple-600">Resources</a>
+            <a href="profile.html" class="block py-2 text-gray-700 hover:text-purple-600">Profile</a>
+            <a href="settings.html" class="block py-2 text-gray-700 hover:text-purple-600">Settings</a>
+            <a href="redeem.html" class="block py-2 text-purple-600 font-semibold">Redeem</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="py-16 bg-gradient-to-r from-purple-100 to-orange-50 text-center">
+        <h1 class="text-4xl font-extrabold mb-4 text-gray-900">Redeem Your Points</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Exchange your hard-earned wellness points for exciting rewards.</p>
+    </header>
+
+    <!-- Points and rewards -->
+    <main class="py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-10 p-6 bg-white rounded-lg shadow-md text-center">
+                <h2 class="text-2xl font-bold mb-2">Your Points Balance</h2>
+                <p class="text-4xl font-extrabold text-purple-600" id="points-balance">0</p>
+            </div>
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">Available Rewards</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Reward 1 -->
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="text-xl font-semibold mb-2">Gift Card ($25)</h3>
+                    <p class="text-gray-600 mb-4">Redeem 250 points for a $25 gift card to your favourite retailer.</p>
+                    <button class="mt-auto px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors redeem-btn" data-cost="250">Redeem for 250 pts</button>
+                </div>
+                <!-- Reward 2 -->
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="text-xl font-semibold mb-2">Fitness Tracker</h3>
+                    <p class="text-gray-600 mb-4">Get a brand new fitness tracker to monitor your health. Costs 500 points.</p>
+                    <button class="mt-auto px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors redeem-btn" data-cost="500">Redeem for 500 pts</button>
+                </div>
+                <!-- Reward 3 -->
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="text-xl font-semibold mb-2">Extra Day Off</h3>
+                    <p class="text-gray-600 mb-4">Treat yourself to an additional vacation day for 750 points.</p>
+                    <button class="mt-auto px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors redeem-btn" data-cost="750">Redeem for 750 pts</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-bold mb-3">About AHELP</h3>
+                <p class="text-gray-600">AHELP empowers Arkansas state employees to live healthier lifestyles through personalized plans, community support and gamified challenges.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Quick Links</h3>
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="text-gray-600 hover:text-purple-600">Home</a></li>
+                    <li><a href="health-assessment.html" class="text-gray-600 hover:text-purple-600">Assessment</a></li>
+                    <li><a href="dashboard.html" class="text-gray-600 hover:text-purple-600">Dashboard</a></li>
+                    <li><a href="progress.html" class="text-gray-600 hover:text-purple-600">Progress</a></li>
+                    <li><a href="challenges.html" class="text-gray-600 hover:text-purple-600">Challenges</a></li>
+                    <li><a href="community.html" class="text-gray-600 hover:text-purple-600">Community</a></li>
+                    <li><a href="resources.html" class="text-gray-600 hover:text-purple-600">Resources</a></li>
+                    <li><a href="profile.html" class="text-gray-600 hover:text-purple-600">Profile</a></li>
+                    <li><a href="settings.html" class="text-gray-600 hover:text-purple-600">Settings</a></li>
+                    <li><a href="redeem.html" class="text-purple-600 font-semibold">Redeem</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold mb-3">Contact Us</h3>
+                <p class="text-gray-600">Email: support@ahelp.ar.gov</p>
+                <p class="text-gray-600">Phone: 555‑0101</p>
+            </div>
+        </div>
+        <div class="mt-8 text-center text-gray-500">© 2025 Arkansas Department of Health. All rights reserved.</div>
+    </footer>
+
+    <!-- Scripts for mobile menu and points handling -->
+    <script>
+        document.getElementById('mobile-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Load points from localStorage or set default
+        let points = parseInt(localStorage.getItem('userPoints') || '0');
+        document.getElementById('points-balance').textContent = points;
+
+        // Redeem button click handler
+        document.querySelectorAll('.redeem-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cost = parseInt(btn.getAttribute('data-cost'));
+                if (points >= cost) {
+                    points -= cost;
+                    localStorage.setItem('userPoints', points);
+                    document.getElementById('points-balance').textContent = points;
+                    // Determine reward name based on cost
+                    let rewardName;
+                    if (cost === 250) rewardName = 'Yoga Mat';
+                    else if (cost === 500) rewardName = 'Fitness Tracker';
+                    else if (cost === 750) rewardName = 'Gym Membership';
+                    // Record redemption in analytics log
+                    try {
+                        const log = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                        log.push({
+                            user: localStorage.getItem('userEmail') || 'guest@ahelp.com',
+                            reward: rewardName,
+                            cost: cost,
+                            date: new Date().toISOString()
+                        });
+                        localStorage.setItem('redemptionLog', JSON.stringify(log));
+                    } catch (e) {
+                        // ignore JSON errors
+                    }
+                    alert('Redemption successful!');
+                } else {
+                    alert('Not enough points to redeem this reward.');
+                }
+            });
+        });
+    </script>
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="hidden fixed bottom-6 right-6 p-3 rounded-full bg-purple-500 text-white shadow-lg" aria-label="Back to top">↑</button>
+    <!-- Dark Mode Persistence & Back‑to‑Top Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+          if (window.scrollY > 200) {
+            backBtn.classList.remove('hidden');
+          } else {
+            backBtn.classList.add('hidden');
+          }
+        });
+        backBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    </script>
+</body>
+</html>

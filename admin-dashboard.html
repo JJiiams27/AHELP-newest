@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHELP – Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for simple analytics charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        /* Dark mode styling */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white,
+        .dark-mode .bg-gray-50,
+        .dark-mode .bg-gray-100 {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .bg-gradient-to-r,
+        .dark-mode .bg-gradient-to-br,
+        .dark-mode .bg-gradient-to-l {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-900,
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0 !important;
+        }
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        .dark-mode .border-gray-300 {
+            border-color: #475569 !important;
+        }
+    </style>
+    <!-- Apply dark mode before page renders -->
+    <script>
+        try {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+                document.body?.classList.add('dark-mode');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation bar -->
+    <nav class="bg-white dark-mode:bg-gray-800 shadow-md sticky top-0 z-50 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img src="logo.png" alt="AHELP logo" class="h-10 w-auto">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-orange-300 bg-clip-text text-transparent">AHELP Admin</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <!-- Each nav link uses a data-tab attribute for tab switching instead of page anchors -->
+                <a href="#analytics" data-tab="analytics" class="admin-nav-link text-purple-600 font-semibold">Analytics</a>
+                <a href="#users" data-tab="users" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300">Users</a>
+                <a href="#alerts" data-tab="alerts" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300">Alerts</a>
+                <a href="#redemptions" data-tab="redemptions" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300">Redemptions</a>
+                <a href="#hra" data-tab="hra" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300">HRA Summary</a>
+                <a href="#reports" data-tab="reports" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300">Reports</a>
+                <!-- Admin management tab only visible to super admins -->
+                <a href="#admin-management" id="admin-management-link" data-tab="admin-management" class="admin-nav-link text-gray-700 dark-mode:text-gray-300 hover:text-purple-600 transition-all duration-300 hidden">Admin Management</a>
+            </div>
+            <button id="admin-logout" class="bg-gradient-to-r from-purple-500 to-orange-400 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-orange-500 transition">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+        <!-- Agency selector for super admin. This element is hidden by default and shown via script for super admins. -->
+        <div id="agency-selector" class="mb-8 hidden flex items-center space-x-2">
+            <label for="agency-select" class="text-gray-700 dark-mode:text-gray-300 font-medium">Viewing Agency:</label>
+            <select id="agency-select" class="px-3 py-2 border rounded-md dark-mode:bg-gray-700 dark-mode:border-gray-600 dark-mode:text-gray-100"></select>
+        </div>
+
+        <!-- Analytics section -->
+        <section id="analytics">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Overall Analytics</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Total Users</h3>
+                    <p id="total-users" class="text-3xl font-extrabold text-purple-600">0</p>
+                </div>
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Average Points</h3>
+                    <p id="avg-points" class="text-3xl font-extrabold text-orange-500">0</p>
+                </div>
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Average Weekly Points</h3>
+                    <p id="avg-weekly" class="text-3xl font-extrabold text-pink-500">0</p>
+                </div>
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Assessments Completed</h3>
+                    <p id="assess-complete" class="text-3xl font-extrabold text-green-500">0</p>
+                </div>
+            </div>
+            <!-- Chart for points distribution (optional) -->
+            <div class="mt-8 bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark-mode:text-white">Points Distribution</h3>
+                <canvas id="pointsChart" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- Alerts section -->
+        <section id="alerts" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Suspicious Activity Alerts</h2>
+            <p class="mb-4 text-gray-600 dark-mode:text-gray-400">Users flagged for unusual behavior such as exceeding weekly points limits or negative point balances.</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white dark-mode:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-200 dark-mode:divide-gray-700">
+                    <thead class="bg-gray-50 dark-mode:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Name</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Email</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Points</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Weekly Pts</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-body" class="divide-y divide-gray-200 dark-mode:divide-gray-700">
+                        <!-- Suspicious users inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Redemptions section -->
+        <section id="redemptions" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Redemption Summary</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Total Redemptions</h3>
+                    <p id="total-redeems" class="text-3xl font-extrabold text-purple-600">0</p>
+                </div>
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Points Spent</h3>
+                    <p id="total-redeem-points" class="text-3xl font-extrabold text-orange-500">0</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white dark-mode:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-200 dark-mode:divide-gray-700">
+                    <thead class="bg-gray-50 dark-mode:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">User</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Reward</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Points Used</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="redeem-table" class="divide-y divide-gray-200 dark-mode:divide-gray-700">
+                        <!-- Redemption rows inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="download-redemptions" class="mt-4 bg-gradient-to-r from-purple-500 to-orange-400 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-600 hover:to-orange-500 transition">Download Redemption CSV</button>
+        </section>
+
+        <!-- HRA summary section -->
+        <section id="hra" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Health Risk Assessment Summary</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Assessments Completed</h3>
+                    <p id="hra-assess-count" class="text-3xl font-extrabold text-green-500">0</p>
+                </div>
+                <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md text-center">
+                    <h3 class="text-lg font-medium text-gray-500 dark-mode:text-gray-400 mb-2">Avg Days Since Assessment</h3>
+                    <p id="hra-avg-days" class="text-3xl font-extrabold text-blue-500">0</p>
+                </div>
+            </div>
+            <div class="mt-8 bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark-mode:text-white">Top Recommended Goals</h3>
+                <canvas id="hraChart" height="200"></canvas>
+            </div>
+            <button id="download-hra" class="mt-4 bg-gradient-to-r from-purple-500 to-orange-400 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-600 hover:to-orange-500 transition">Download HRA CSV</button>
+        </section>
+
+        <!-- Users management section -->
+        <section id="users" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">User Management</h2>
+            <!-- Search bar for filtering users -->
+            <div class="mb-4 max-w-md">
+                <input id="user-search" type="text" placeholder="Search by name or email" class="w-full px-4 py-2 border rounded-md dark-mode:bg-gray-600 dark-mode:border-gray-500 dark-mode:text-gray-100" />
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white dark-mode:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-200 dark-mode:divide-gray-700">
+                    <thead class="bg-gray-50 dark-mode:bg-gray-700">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Name</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Agency</th>
+                            <!-- Password column shows masked value and supports reset action -->
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Password</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Points</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Weekly Pts</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Last Assessment</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table" class="divide-y divide-gray-200 dark-mode:divide-gray-700">
+                        <!-- Rows dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Reports section -->
+        <section id="reports" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Reports</h2>
+            <p class="mb-4 text-gray-600 dark-mode:text-gray-400">Generate downloadable reports to analyse user engagement and program effectiveness.</p>
+            <button id="run-report" class="bg-gradient-to-r from-purple-500 to-orange-400 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-600 hover:to-orange-500 transition">Download CSV Report</button>
+        </section>
+
+        <!-- Admin management section (super admin only) -->
+        <section id="admin-management" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark-mode:text-white">Admin Management</h2>
+            <p class="mb-4 text-gray-600 dark-mode:text-gray-400">Super administrators can add or remove admin accounts. Each admin is tied to an agency and can only view data for that agency. Assigning "All Agencies" grants super admin privileges.</p>
+            <!-- Form to add a new admin -->
+            <div class="mb-8 bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark-mode:text-white">Add New Admin</h3>
+                <form id="admin-add-form" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Email</label>
+                        <input id="new-admin-email" type="email" required class="w-full px-4 py-2 border rounded-md dark-mode:bg-gray-600 dark-mode:border-gray-500 dark-mode:text-gray-100" placeholder="admin@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Password</label>
+                        <input id="new-admin-password" type="password" required class="w-full px-4 py-2 border rounded-md dark-mode:bg-gray-600 dark-mode:border-gray-500 dark-mode:text-gray-100" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark-mode:text-gray-300 mb-1">Agency</label>
+                        <select id="new-admin-agency" class="w-full px-4 py-2 border rounded-md dark-mode:bg-gray-600 dark-mode:border-gray-500 dark-mode:text-gray-100"></select>
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-1 flex items-end">
+                        <button type="submit" class="w-full bg-gradient-to-r from-purple-500 to-orange-400 text-white py-2 rounded-md font-medium hover:from-purple-600 hover:to-orange-500 transition">Create Admin</button>
+                    </div>
+                </form>
+            </div>
+            <!-- Table of existing admins -->
+            <div class="bg-white dark-mode:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark-mode:text-white">Existing Admins</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white dark-mode:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-200 dark-mode:divide-gray-700">
+                        <thead class="bg-gray-50 dark-mode:bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Email</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Agency</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Role</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark-mode:text-gray-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-list" class="divide-y divide-gray-200 dark-mode:divide-gray-700">
+                            <!-- Admin rows generated via script -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Redirect if not logged in as admin
+            if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+            // Weekly points limit constant for suspicious activity detection
+            const WEEKLY_POINTS_LIMIT = 200;
+
+            // Load or initialise admin users data
+            let adminUsers;
+            try {
+                adminUsers = JSON.parse(localStorage.getItem('adminUsers')) || [];
+            } catch (e) {
+                adminUsers = [];
+            }
+            // If no users stored, seed with current user info or sample data
+            if (adminUsers.length === 0) {
+                const sampleUser = {
+                    name: localStorage.getItem('userName') || 'Guest',
+                    email: localStorage.getItem('userEmail') || 'guest@ahelp.com',
+                    password: localStorage.getItem('userPassword') || 'guestpass',
+                    points: parseInt(localStorage.getItem('userPoints')) || 0,
+                    weeklyPoints: parseInt(localStorage.getItem('weeklyPoints')) || 0,
+                    assessmentDate: localStorage.getItem('ahelpHraDate') || null,
+                    // Pull any stored recommendations from the health assessment, default to empty
+                    recommendations: (() => {
+                        try {
+                            return JSON.parse(localStorage.getItem('ahelpRecommendations')) || [];
+                        } catch (e) {
+                            return [];
+                        }
+                    })(),
+                    // Persist the agency chosen during sign up; default unknown
+                    agency: localStorage.getItem('userAgency') || 'Unknown'
+                };
+                adminUsers.push(sampleUser);
+                // Additional fake users for demonstration with example recommendations, passwords and agencies
+                adminUsers.push({ name: 'Jamie', email: 'jamie@ahelp.com', password: 'jamiepass', points: 120, weeklyPoints: 40, assessmentDate: null, recommendations: ['150 minutes of exercise','Eat more fruits and vegetables'], agency: 'Commerce' });
+                adminUsers.push({ name: 'Morgan', email: 'morgan@ahelp.com', password: 'morganpass', points: 250, weeklyPoints: 80, assessmentDate: '2025-07-15T00:00:00Z', recommendations: ['Drink 8 glasses of water','Get 7-8 hours sleep','Manage stress'], agency: 'Health' });
+                localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+            }
+
+            // Determine the agency for the logged-in admin. If 'all', admin can view all agencies.
+            const adminAgency = localStorage.getItem('adminAgency') || 'all';
+            const isSuperAdmin = localStorage.getItem('isSuperAdmin') === 'true';
+            // List of agencies used across the site
+            const agenciesList = [
+                'Agriculture',
+                'Commerce',
+                'Corrections',
+                'Education',
+                'Energy and Environment',
+                'DFA',
+                'Health',
+                'DHS',
+                'Inspector General',
+                'Labor and Licensing',
+                'Military',
+                'Parks, Heritage, Tourism',
+                'Public Safety',
+                'Transformation & Shared Svcs',
+                'Veterans Affairs',
+                'House of Representatives',
+                'Senate',
+                'Legislative Audit',
+                'Bureau of Leg Research',
+                'Court of Appeals',
+                'Admin Office of the Courts',
+                'Prosecutor Coordinator',
+                'Supreme Court',
+                'Governors Office',
+                'Lieutenant Governor',
+                'Attorney General',
+                'Auditor of State',
+                'Land Commissioner',
+                'Secretary of State',
+                'State Treasurer',
+                'Game & Fish',
+                'Election Comm',
+                'Ethics Comm',
+                'JDDC',
+                'DDSSA',
+                'Public Defender',
+                'State Claims Commission',
+                'AR Public Employees Retirement',
+                'Teacher Retirement',
+                'PSC',
+                'AETN-PBS'
+            ];
+            // Load admin accounts and seed if none exist
+            let adminAccounts;
+            try {
+                adminAccounts = JSON.parse(localStorage.getItem('adminAccounts')) || [];
+            } catch (e) {
+                adminAccounts = [];
+            }
+            if (adminAccounts.length === 0) {
+                // Seed with a default super admin account if none exist
+                adminAccounts.push({ email: 'admin@ahelp.com', password: 'admin123', agency: 'all' });
+                localStorage.setItem('adminAccounts', JSON.stringify(adminAccounts));
+            }
+            // Identify the currently logged-in admin account
+            const currentAdminEmail = localStorage.getItem('adminEmail') || '';
+            // Show or hide the admin management link based on super admin status
+            const adminManagementLink = document.getElementById('admin-management-link');
+            if (adminManagementLink) {
+                if (isSuperAdmin) {
+                    adminManagementLink.classList.remove('hidden');
+                } else {
+                    adminManagementLink.classList.add('hidden');
+                }
+            }
+            // Populate the new admin agency dropdown with available agencies including 'all'
+            const newAdminAgencyEl = document.getElementById('new-admin-agency');
+            if (newAdminAgencyEl) {
+                let optionsHTML = '<option value="all">All Agencies (Super Admin)</option>';
+                agenciesList.forEach(agency => {
+                    optionsHTML += `<option value="${agency}">${agency}</option>`;
+                });
+                newAdminAgencyEl.innerHTML = optionsHTML;
+            }
+            // Function to render the list of admin accounts in the management table
+            function renderAdminAccounts() {
+                const tbody = document.getElementById('admin-list');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                adminAccounts.forEach((acc, index) => {
+                    // Show all accounts for super admins, otherwise only show the current admin account
+                    if (!isSuperAdmin && acc.email !== currentAdminEmail) return;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
+                    const role = (acc.agency || '').toLowerCase() === 'all' ? 'Super' : 'Agency';
+                    const disableDelete = (adminAccounts.length === 1 || acc.email === currentAdminEmail) ? 'disabled' : '';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${acc.email}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${acc.agency === 'all' ? 'All Agencies' : (acc.agency || '—')}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${role}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button class="px-2 py-1 bg-red-500 text-white rounded-md text-xs" data-action="delete-admin" data-index="${index}" ${disableDelete}>Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            // Submit handler for adding a new admin account
+            const adminAddForm = document.getElementById('admin-add-form');
+            if (adminAddForm) {
+                adminAddForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const emailInput = document.getElementById('new-admin-email');
+                    const passwordInput = document.getElementById('new-admin-password');
+                    const agencySelect = document.getElementById('new-admin-agency');
+                    const newEmail = emailInput.value.trim();
+                    const newPassword = passwordInput.value;
+                    const newAgency = agencySelect.value;
+                    // Validate and ensure unique email
+                    if (!newEmail || !newPassword) {
+                        alert('Email and password are required.');
+                        return;
+                    }
+                    const exists = adminAccounts.some(acc => acc.email.toLowerCase() === newEmail.toLowerCase());
+                    if (exists) {
+                        alert('An admin with this email already exists.');
+                        return;
+                    }
+                    adminAccounts.push({ email: newEmail, password: newPassword, agency: newAgency });
+                    localStorage.setItem('adminAccounts', JSON.stringify(adminAccounts));
+                    // Reset form fields
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    agencySelect.value = 'all';
+                    renderAdminAccounts();
+                    alert('Admin account created successfully.');
+                });
+            }
+            // Event delegation for deleting admin accounts
+            const adminListTable = document.getElementById('admin-list');
+            if (adminListTable) {
+                adminListTable.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-action="delete-admin"]');
+                    if (!btn) return;
+                    const idx = parseInt(btn.getAttribute('data-index'));
+                    if (isNaN(idx)) return;
+                    const acc = adminAccounts[idx];
+                    if (adminAccounts.length === 1) {
+                        alert('Cannot delete the last admin account.');
+                        return;
+                    }
+                    if (acc.email === currentAdminEmail) {
+                        alert('You cannot delete your own account.');
+                        return;
+                    }
+                    if (confirm(`Delete admin account ${acc.email}?`)) {
+                        adminAccounts.splice(idx, 1);
+                        localStorage.setItem('adminAccounts', JSON.stringify(adminAccounts));
+                        renderAdminAccounts();
+                    }
+                });
+            }
+            // Helper: return users visible to the current admin
+            function getFilteredUsers() {
+                // Always pull the latest adminAgency from localStorage to allow dynamic switching
+                const currentAgency = localStorage.getItem('adminAgency') || 'all';
+                if (currentAgency === 'all') return adminUsers;
+                return adminUsers.filter(u => (u.agency || '').toLowerCase() === currentAgency.toLowerCase());
+            }
+            // Search query state
+            let userSearchQuery = '';
+
+            // Set up agency selector UI. Show a dropdown for super admins; otherwise display current agency label.
+            const agencySelectorDiv = document.getElementById('agency-selector');
+            const agencySelectEl = document.getElementById('agency-select');
+            const agencyLabel = agencySelectorDiv ? agencySelectorDiv.querySelector('label') : null;
+            if (agencySelectorDiv && agencySelectEl && agencyLabel) {
+                if (isSuperAdmin) {
+                    // Populate options including 'all'
+                    let optionsHTML = '<option value="all">All Agencies</option>';
+                    agenciesList.forEach(agency => {
+                        optionsHTML += `<option value="${agency}">${agency}</option>`;
+                    });
+                    agencySelectEl.innerHTML = optionsHTML;
+                    agencySelectEl.value = adminAgency;
+                    agencySelectorDiv.classList.remove('hidden');
+                    agencySelectEl.classList.remove('hidden');
+                    agencySelectEl.addEventListener('change', (event) => {
+                        const selected = event.target.value;
+                        localStorage.setItem('adminAgency', selected);
+                        // Refresh analytics and tables
+                        renderTable();
+                        updateAnalytics();
+                        updateAlerts();
+                        updateRedemptions();
+                        updateHraSummary();
+                    });
+                } else {
+                    // Non-super admin: show current agency label and hide the select
+                    agencyLabel.textContent = `Viewing Agency: ${adminAgency}`;
+                    agencySelectEl.classList.add('hidden');
+                    agencySelectorDiv.classList.remove('hidden');
+                }
+            }
+
+            // Attach search input listener
+            const searchInput = document.getElementById('user-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    userSearchQuery = e.target.value.toLowerCase().trim();
+                    renderTable();
+                });
+            }
+            // Compute analytics
+            function updateAnalytics() {
+                const filtered = getFilteredUsers();
+                const totalUsers = filtered.length;
+                const totalPoints = filtered.reduce((sum, u) => sum + (u.points || 0), 0);
+                const totalWeekly = filtered.reduce((sum, u) => sum + (u.weeklyPoints || 0), 0);
+                const assessmentsCompleted = filtered.filter(u => u.assessmentDate).length;
+                document.getElementById('total-users').textContent = totalUsers;
+                document.getElementById('avg-points').textContent = totalUsers ? Math.round(totalPoints / totalUsers) : 0;
+                document.getElementById('avg-weekly').textContent = totalUsers ? Math.round(totalWeekly / totalUsers) : 0;
+                document.getElementById('assess-complete').textContent = assessmentsCompleted;
+                // Update points distribution chart
+                const ctx = document.getElementById('pointsChart').getContext('2d');
+                if (window.pointsChart) window.pointsChart.destroy();
+                window.pointsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: filtered.map(u => u.name),
+                        datasets: [{
+                            label: 'Total Points',
+                            data: filtered.map(u => u.points),
+                            backgroundColor: filtered.map(() => '#a855f7'),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'Users' }, grid: { display: false } },
+                            y: { beginAtZero: true, title: { display: true, text: 'Points' } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Function to update alerts table based on suspicious activity
+            function updateAlerts() {
+                const suspicious = getFilteredUsers().filter(u => u.weeklyPoints > WEEKLY_POINTS_LIMIT || u.points < 0);
+                const tbody = document.getElementById('alerts-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                suspicious.forEach(u => {
+                    const reasons = [];
+                    if (u.weeklyPoints > WEEKLY_POINTS_LIMIT) reasons.push('Weekly points exceeded');
+                    if (u.points < 0) reasons.push('Negative points');
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${u.name}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${u.email}</td>
+                        <td class="px-4 py-3 text-center text-gray-900 dark-mode:text-gray-100">${u.points}</td>
+                        <td class="px-4 py-3 text-center text-gray-900 dark-mode:text-gray-100">${u.weeklyPoints}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${reasons.join(', ')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Function to update redemptions summary and table
+            function updateRedemptions() {
+                let redemptionLog;
+                try {
+                    redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                } catch (e) {
+                    redemptionLog = [];
+                }
+                if (redemptionLog.length === 0) {
+                    redemptionLog.push({ user: 'guest@ahelp.com', reward: 'Yoga Mat', cost: 250, date: new Date().toISOString() });
+                    redemptionLog.push({ user: 'jamie@ahelp.com', reward: 'Fitness Tracker', cost: 500, date: new Date().toISOString() });
+                    localStorage.setItem('redemptionLog', JSON.stringify(redemptionLog));
+                }
+                // Filter redemption log to only include users in the current admin's agency, unless 'all' is selected
+                let filteredLogs;
+                const currentAgency = localStorage.getItem('adminAgency') || 'all';
+                if (currentAgency === 'all') {
+                    filteredLogs = redemptionLog;
+                } else {
+                    const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
+                    filteredLogs = redemptionLog.filter(r => allowedEmails.has(r.user));
+                }
+                const totalRedeems = filteredLogs.length;
+                const totalPointsSpent = filteredLogs.reduce((sum, r) => sum + (parseInt(r.cost) || 0), 0);
+                const redeemsEl = document.getElementById('total-redeems');
+                const pointsEl = document.getElementById('total-redeem-points');
+                if (redeemsEl) redeemsEl.textContent = totalRedeems;
+                if (pointsEl) pointsEl.textContent = totalPointsSpent;
+                const tbody = document.getElementById('redeem-table');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                filteredLogs.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${r.user}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${r.reward}</td>
+                        <td class="px-4 py-3 text-center text-gray-900 dark-mode:text-gray-100">${r.cost}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${new Date(r.date).toLocaleDateString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Function to update HRA summary and chart
+            function updateHraSummary() {
+                const assessments = getFilteredUsers().filter(u => u.assessmentDate);
+                const totalAssess = assessments.length;
+                const assessEl = document.getElementById('hra-assess-count');
+                if (assessEl) assessEl.textContent = totalAssess;
+                let totalDays = 0;
+                const freq = {};
+                assessments.forEach(u => {
+                    if (u.assessmentDate) {
+                        const days = (Date.now() - new Date(u.assessmentDate).getTime()) / (1000 * 60 * 60 * 24);
+                        totalDays += days;
+                    }
+                    (u.recommendations || []).forEach(rec => {
+                        freq[rec] = (freq[rec] || 0) + 1;
+                    });
+                });
+                const avgDays = totalAssess ? Math.round(totalDays / totalAssess) : 0;
+                const avgEl = document.getElementById('hra-avg-days');
+                if (avgEl) avgEl.textContent = avgDays;
+                const ctx2 = document.getElementById('hraChart') ? document.getElementById('hraChart').getContext('2d') : null;
+                if (ctx2) {
+                    const labels = Object.keys(freq);
+                    const values = labels.map(l => freq[l]);
+                    if (window.hraChart) window.hraChart.destroy();
+                    window.hraChart = new Chart(ctx2, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Users',
+                                data: values,
+                                backgroundColor: labels.map(() => '#34d399'),
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: { title: { display: true, text: 'Goals' }, grid: { display: false } },
+                                y: { beginAtZero: true, title: { display: true, text: 'Count' } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            }
+            // Populate user table with filtering, password masking and extended actions
+            function renderTable() {
+                const tbody = document.getElementById('users-table');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                getFilteredUsers().forEach((user) => {
+                    const originalIndex = adminUsers.indexOf(user);
+                    // Filter by search query if present
+                    const query = userSearchQuery;
+                    if (query) {
+                        const match = (user.name || '').toLowerCase().includes(query) || (user.email || '').toLowerCase().includes(query);
+                        if (!match) return;
+                    }
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark-mode:hover:bg-gray-700';
+                    // Mask password display
+                    const maskedPassword = user.password ? '******' : '';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.name}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.email}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.agency || '—'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${maskedPassword}</td>
+                        <td class="px-4 py-3 text-center">
+                            <input type="number" min="0" value="${user.points}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500" data-index="${originalIndex}" data-field="points">
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <input type="number" min="0" value="${user.weeklyPoints}" class="w-20 px-2 py-1 border rounded-md text-center dark-mode:bg-gray-600 dark-mode:border-gray-500" data-index="${originalIndex}" data-field="weeklyPoints">
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark-mode:text-gray-100">${user.assessmentDate ? new Date(user.assessmentDate).toLocaleDateString() : '—'}</td>
+                        <td class="px-4 py-3 text-center space-x-1 flex flex-wrap justify-center">
+                            <button class="mb-1 px-2 py-1 bg-blue-500 text-white rounded-md text-xs" data-action="save" data-index="${originalIndex}">Save</button>
+                            <button class="mb-1 px-2 py-1 bg-green-500 text-white rounded-md text-xs" data-action="reset-weekly" data-index="${originalIndex}">Reset Weekly</button>
+                            <button class="mb-1 px-2 py-1 bg-yellow-500 text-white rounded-md text-xs" data-action="reset-points" data-index="${originalIndex}">Reset Points</button>
+                            <button class="mb-1 px-2 py-1 bg-indigo-500 text-white rounded-md text-xs" data-action="reset-password" data-index="${originalIndex}">Reset Password</button>
+                            <button class="mb-1 px-2 py-1 bg-teal-500 text-white rounded-md text-xs" data-action="view-redeems" data-index="${originalIndex}">View Redeems</button>
+                            <button class="mb-1 px-2 py-1 bg-red-500 text-white rounded-md text-xs" data-action="delete" data-index="${originalIndex}">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            // Event delegation for table actions
+            document.getElementById('users-table').addEventListener('click', (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                const index = parseInt(btn.getAttribute('data-index'));
+                if (action === 'save') {
+                    // Save updated points
+                    const row = btn.closest('tr');
+                    const inputs = row.querySelectorAll('input');
+                    inputs.forEach(input => {
+                        const field = input.getAttribute('data-field');
+                        const value = parseInt(input.value) || 0;
+                        adminUsers[index][field] = value;
+                    });
+                    localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+                    updateAnalytics();
+                    updateAlerts();
+                } else if (action === 'reset-weekly') {
+                    // Reset only weekly points
+                    adminUsers[index].weeklyPoints = 0;
+                    localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+                    renderTable();
+                    updateAnalytics();
+                    updateAlerts();
+                } else if (action === 'reset-points') {
+                    // Reset both total and weekly points
+                    if (confirm('Reset total and weekly points for this user?')) {
+                        adminUsers[index].points = 0;
+                        adminUsers[index].weeklyPoints = 0;
+                        localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+                        renderTable();
+                        updateAnalytics();
+                        updateAlerts();
+                    }
+                } else if (action === 'reset-password') {
+                    // Prompt for new password
+                    const newPass = prompt('Enter new password for ' + adminUsers[index].name + ':');
+                    if (newPass !== null && newPass.trim() !== '') {
+                        adminUsers[index].password = newPass.trim();
+                        localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+                        renderTable();
+                        alert('Password reset successfully.');
+                    }
+                } else if (action === 'view-redeems') {
+                    // Show redemption history for user
+                    let redemptionLog;
+                    try {
+                        redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                    } catch (ex) {
+                        redemptionLog = [];
+                    }
+                    const userEmail = adminUsers[index].email;
+                    const userRedeems = redemptionLog.filter(r => r.user === userEmail);
+                    if (userRedeems.length === 0) {
+                        alert('No redemption history for this user.');
+                    } else {
+                        const lines = userRedeems.map(rec => `${rec.reward} - ${rec.cost} pts on ${new Date(rec.date).toLocaleDateString()}`);
+                        alert(lines.join('\n'));
+                    }
+                } else if (action === 'delete') {
+                    if (confirm('Are you sure you want to delete this user?')) {
+                        adminUsers.splice(index, 1);
+                        localStorage.setItem('adminUsers', JSON.stringify(adminUsers));
+                        renderTable();
+                        updateAnalytics();
+                        updateAlerts();
+                    }
+                }
+            });
+            // Handle inputs update on blur
+            document.getElementById('users-table').addEventListener('change', (e) => {
+                const input = e.target;
+                if (input.tagName.toLowerCase() !== 'input') return;
+                const index = parseInt(input.getAttribute('data-index'));
+                const field = input.getAttribute('data-field');
+                const value = parseInt(input.value) || 0;
+                adminUsers[index][field] = value;
+            });
+            // Run report to download CSV
+            document.getElementById('run-report').addEventListener('click', () => {
+                let csv = 'Name,Email,Agency,Points,Weekly Points,Last Assessment\n';
+                // Only include users for this admin's agency (or all if super admin)
+                getFilteredUsers().forEach(u => {
+                    csv += `${u.name},${u.email},${u.agency || ''},${u.points},${u.weeklyPoints},${u.assessmentDate || ''}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `ahelp_user_report_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Download redemption report as CSV
+            document.getElementById('download-redemptions').addEventListener('click', () => {
+                let redemptionLog;
+                try {
+                    redemptionLog = JSON.parse(localStorage.getItem('redemptionLog')) || [];
+                } catch (e) {
+                    redemptionLog = [];
+                }
+                // Filter redemption log to respect the current admin agency selection
+                let logsForExport;
+                const currentAgency = localStorage.getItem('adminAgency') || 'all';
+                if (currentAgency === 'all') {
+                    logsForExport = redemptionLog;
+                } else {
+                    const allowedEmails = new Set(getFilteredUsers().map(u => u.email));
+                    logsForExport = redemptionLog.filter(r => allowedEmails.has(r.user));
+                }
+                let csv = 'User,Reward,Points Used,Date\n';
+                logsForExport.forEach(rec => {
+                    csv += `${rec.user},${rec.reward},${rec.cost},${rec.date}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `ahelp_redemptions_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Download HRA summary as CSV
+            document.getElementById('download-hra').addEventListener('click', () => {
+                const freq = {};
+                // Compute frequency of recommended goals for users in current agency filter
+                getFilteredUsers().filter(u => u.assessmentDate).forEach(u => {
+                    (u.recommendations || []).forEach(goal => {
+                        freq[goal] = (freq[goal] || 0) + 1;
+                    });
+                });
+                let csv = 'Goal,Count\n';
+                Object.keys(freq).forEach(goal => {
+                    csv += `${goal},${freq[goal]}\n`;
+                });
+                csv += `Assessments Completed,${document.getElementById('hra-assess-count').textContent}\n`;
+                csv += `Average Days Since Assessment,${document.getElementById('hra-avg-days').textContent}\n`;
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `ahelp_hra_summary_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            // Logout functionality
+            document.getElementById('admin-logout').addEventListener('click', () => {
+                localStorage.removeItem('isAdminLoggedIn');
+                window.location.href = 'index.html';
+            });
+            // Function to show a specific tab and hide others
+            function showTab(tab) {
+                const sections = document.querySelectorAll('main > section');
+                sections.forEach(sec => {
+                    if (sec.id === tab) {
+                        sec.classList.remove('hidden');
+                    } else {
+                        sec.classList.add('hidden');
+                    }
+                });
+                // Highlight nav link
+                document.querySelectorAll('.admin-nav-link').forEach(link => {
+                    if (link.getAttribute('data-tab') === tab) {
+                        link.classList.add('font-semibold', 'text-purple-600');
+                        link.classList.remove('text-gray-700', 'dark-mode:text-gray-300');
+                    } else {
+                        link.classList.remove('font-semibold', 'text-purple-600');
+                        link.classList.add('text-gray-700');
+                    }
+                });
+            }
+            // Attach click handlers to nav links for tab switching
+            document.querySelectorAll('.admin-nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = link.getAttribute('data-tab');
+                    showTab(tabId);
+                });
+            });
+            // Initial render and default tab
+            renderTable();
+            updateAnalytics();
+            updateAlerts();
+            updateRedemptions();
+            updateHraSummary();
+            // Render admin accounts list if the function exists (for super admins)
+            if (typeof renderAdminAccounts === 'function') {
+                renderAdminAccounts();
+            }
+            showTab('analytics');
+        });
+    </script>
+</body>
+</html>
